@@ -24,22 +24,22 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(log_formatter)
 logger.addHandler(console_handler)
 ##################################################################################
-logger.info('Loading Token from [option.json]')
+logger.info('Loading Token from [token.json]')
 try:
-    botToken = json.load(open('data/option.json'))['token']
+    botToken = json.load(open('data/token.json'))['token']
     if len(botToken) == 59:
         logger.info('Token is Ready!')
     else:
-        logger.critical('Invalid token load from [option.json]')
+        logger.critical('Invalid token load from [token.json]')
         botToken = '#'
 except:
-    logger.critical('Failed to load token from [option.json]')
+    logger.critical('Failed to load token from [token.json]')
     botToken = '#'
 
 if botToken == '#':
     botToken = getpass.getpass('What is **Your** Token: ')
 ##################################################################################
-owner_id = 0 # 0 == Auto Detect
+owner_id = 686309666690826265 # 0 == Auto Detect
 client = discord.Client()
 
 color = {'normal': 0xFCFCFC,
@@ -68,6 +68,13 @@ class Radio:
     def __del__(self):
         logger.info('Radio OFF at {0} by [{1}]{2}'.format(self.message.guild.id, self.message.author.id, self.message.author))
 
+    def end(self):
+        asyncio.run_coroutine_threadsafe(self.client.disconnect(), client.loop)
+        try:
+            del radioWorker[self.message.guild.id]
+        except:
+            pass
+
     def getclient(self):
         return self.client
 
@@ -84,7 +91,7 @@ class Radio:
                 if len(self.client.channel.members) == 1:
                     embed = discord.Embed(title=":deciduous_tree: :evergreen_tree: :deciduous_tree: :evergreen_tree:", description='전기와 트래픽을 아껴주세요!', color=color['info'])
                     asyncio.run_coroutine_threadsafe(self.message.channel.send(embed=embed), client.loop)
-                    asyncio.run_coroutine_threadsafe(self.end(), client.loop)
+                    self.end()
                 else:
                     if self.stat[0] == 0:
                         self.playNow = random.randint(0, len(playlist) - 1)        
@@ -120,7 +127,7 @@ class Radio:
             player = discord.FFmpegOpusAudio("data/music/{0}".format(playlist[self.playNow]['name']))
         try:
             if self.stat[0] != 2:
-                asyncio.run_coroutine_threadsafe(self.message.channel.send(embed=self.nowPlay()), client.loop)
+                asyncio.Task( self.sendPlay(self.message), loop=client.loop)
             self.client.play(player, after=self.playnext )
         except Exception as e:
             logger.critical('Voice Connection is dead at {0}, cause {1}'.format(self.message.guild.id, e))
@@ -132,14 +139,16 @@ class Radio:
                 pass
             return
 
-    def nowPlay(self):
-        embed = discord.Embed(title=":headphones: - Now Playing", description='{0} - {1}'.format(playlist[self.playNow]['author'], playlist[self.playNow]['title']), color=color['normal'])
-        embed.url = playlist[self.playNow]['url']
-        return embed
-
-    async def end(self):
-        await self.client.disconnect()
-        del radioWorker[self.message.guild.id]
+    async def sendPlay(self, message):
+        try:
+            embed = discord.Embed(title=":headphones: - Now Playing", description='{0} - {1}'.format(playlist[self.playNow]['author'], playlist[self.playNow]['title']), color=color['normal'])
+            embed.url = playlist[self.playNow]['url']
+            await message.channel.send(embed=embed)
+        except:
+            await message.channel.send(':warning: [링크 첨부] 권한이 부족합니다 :warning:')
+            if self.message == message:
+                logger.error('Permission missing at {0}'.format(self.message.guild.id))
+                self.end()
 
 async def radio_play(message, voiceclient):
     try:
@@ -164,9 +173,6 @@ async def radio_play(message, voiceclient):
     radioWorker[message.guild.id] = Radio(message, voiceclient)
     radioWorker[message.guild.id].playsound()
 ##################################################################################
-def can_use_embed(message):
-    return message.guild.me.guild_permissions.embed_links
-##################################################################################
 def dump_guild():
     guilds = list(client.guilds)
     result = list()
@@ -179,16 +185,19 @@ def dump_guild():
 @client.event
 async def on_ready():
     global owner_id
+    auto = await client.application_info()
     if owner_id == 0:
-        temp = await client.application_info()
-        owner_id = temp.owner.id
+        owner_id = auto.owner.id
     await client.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.listening, name="Radio"))
 
     logger.info('-'*50)
     logger.info('BOT Login -> {0.user}'.format(client))
     logger.info('BOT Owner -> {0}'.format(owner_id))
+    if owner_id != auto.owner.id:
+        logger.warning('BOT Owner is not the same as Auto Detect mode')
+        logger.warning('Auto Detect Owner -> {0} / {1}'.format(auto.owner.id, auto.owner))
     logger.info('-'*50)
-    logger.info('invite bot: https://discordapp.com/api/oauth2/authorize?client_id={0}&permissions=3165184&scope=bot'.format(client.user.id))
+    logger.info('invite bot: https://discordapp.com/api/oauth2/authorize?client_id={0}&permissions=52224&scope=bot'.format(client.user.id))
     logger.info('-'*50)
     logger.info('Connected to {0} servers'.format(len(client.guilds)))
     logger.info('-> data/guild.json')
@@ -197,10 +206,10 @@ async def on_ready():
 ##################################################################################
 @client.event
 async def on_message(message):
-    if message.author == client.user or isinstance(message.channel, discord.abc.PrivateChannel):
+    if message.author.bot or isinstance(message.channel, discord.abc.PrivateChannel):
         return
 
-    if str(client.user.id) in message.content:
+    if client.user.mentioned_in(message):
         await message.channel.send("I'm a teapot")
         return
 
@@ -429,7 +438,7 @@ async def on_message(message):
     if message.content.startswith(";nowplay") or message.content.startswith(";np"):
         logger.info('[{0}]{1} use [{2}] command at [{3}]'.format(message.author.id, message.author, message.content, message.guild.id))
         try:
-            await message.channel.send(embed=radioWorker[message.guild.id].nowPlay())
+            await radioWorker[message.guild.id].sendPlay(message)
         except KeyError:
             logger.error('No Radio Worker at {0}'.format(message.guild.id))
             embed = discord.Embed(title="?", description='라디오가 꺼저있다는데..', color=color['info'])
@@ -454,8 +463,8 @@ async def on_message(message):
     if message.content.startswith(";exit") or message.content.startswith(";e"):
         logger.info('[{0}]{1} use [{2}] command at [{3}]'.format(message.author.id, message.author, message.content, message.guild.id))
         try:
-            await radioWorker[message.guild.id].end()
             logger.info('Radio Disconnected at {0}'.format(message.guild.id))
+            radioWorker[message.guild.id].end()
             await message.channel.send(':wave:')
         except KeyError:
             logger.error('No Radio Worker at {0}'.format(message.guild.id))
