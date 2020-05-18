@@ -39,7 +39,7 @@ except:
 if botToken == '#':
     botToken = getpass.getpass('What is **Your** Token: ')
 ##################################################################################
-owner_id = 686309666690826265 # 0 == Auto Detect
+owner_id = 0 # 0 == Auto Detect
 client = discord.Client()
 
 color = {'normal': 0xFCFCFC,
