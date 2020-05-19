@@ -361,7 +361,7 @@ async def on_message(message):
                 return
             embed = discord.Embed(title="검색 완료", color=color['normal'])
             for i in range(0, len(playlist)):
-                if searchItem.upper() in playlist[i]['author'].upper() or searchItem.upper() in playlist[i]['title'].upper():
+                if searchItem.upper() in str(playlist[i]['author']).upper() or searchItem.upper() in str(playlist[i]['title']).upper():
                     result += 1
                     embed.add_field(name="{0}번 트랙".format(i), value='{0} - {1}'.format(playlist[i]['author'], playlist[i]['title']), inline=False)
 
