@@ -1,10 +1,15 @@
 # RadioBOT
 discord.py 기반 디스코드 라디오봇
 
-## 사용전 설정
-1. ./data/token.json 파일을 자신의 토큰으로 수정하기
-2. ./data/music/ 풀더에 음악 채우기
-3. ./data/playlist.json 에 적용하기
+## 실행 전 설정
+1. 디스코드 개발자 센터에서 자신만의 봇만들고 토큰 수정하기
+2. data/token.json 파일을 자신의 토큰으로 수정하기
+3. data/music/ 풀더에 음악 채우기
+4. log 풀더 만들기
+
+## 실행 방법
+1. requirements.txt 에 있는 파이썬 패키지 설치하기
+2. radio.py 파일을 실행하기
 
 ## 도움말
 <pre>
@@ -31,7 +36,12 @@ discord.py 기반 디스코드 라디오봇
 </pre>
 
 
+
+
+
+
+
 - - -
 ### TODO
- * [ ] 음악 자동인식
- * [ ] 모듈화...
+ * [x] 음악 자동인식
+ * [ ] 모듈화
