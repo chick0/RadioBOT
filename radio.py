@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import os
+import sys
 import json
 import time
-import ffmpeg
 import random
-import discord
 import asyncio
 import logging
 import getpass
+
+import eyed3
+import ffmpeg
+import discord
 ##################################################################################
 log_formatter = logging.Formatter(
     "%(asctime)s [%(levelname)s]: %(message)s",
@@ -47,13 +51,22 @@ color = {'normal': 0xFCFCFC,
          'warn': 0xCD3B3B}
 
 radioWorker = dict()
+playlist = list()
+
+music_dir = './data/music/'
 ##################################################################################
-logger.info('Loading playlist...')
+logger.info('Loading music from [{0}]...'.format(music_dir))
 try:
-    playlist = json.load(open('data/playlist.json'))
-    logger.info('Playlist load completed!')
+    musicFiles = os.listdir(music_dir)
+    for musicFile in musicFiles:
+        media = eyed3.load(music_dir + musicFile)
+        playlist.append({'author': media.tag.artist, "title": media.tag.title, 'name': musicFile})
+    
+    playlist = sorted(playlist, key=lambda playlist: playlist['title'])
+    logger.info('Music is Ready!')
 except:
-    logger.critical('Playlist load fail!!')
+    logger.critical('Can\'t Load music at [{0}]'.format(music_dir))
+    sys.exit(-1)
 ##################################################################################
 class Radio:
     def __init__(self, message, voiceclient):
@@ -122,9 +135,9 @@ class Radio:
 
     def playsound(self):
         try:
-            player = discord.FFmpegOpusAudio("data/music/{0}".format(playlist[self.playNow]['name']), executable="bin/ffmpeg.exe")
+            player = discord.FFmpegOpusAudio(music_dir + playlist[self.playNow]['name'], executable="bin/ffmpeg.exe")
         except OSError:
-            player = discord.FFmpegOpusAudio("data/music/{0}".format(playlist[self.playNow]['name']))
+            player = discord.FFmpegOpusAudio(music_dir + playlist[self.playNow]['name'])
         try:
             if self.stat[0] != 2:
                 asyncio.Task( self.sendPlay(self.message), loop=client.loop)
@@ -142,13 +155,11 @@ class Radio:
     async def sendPlay(self, message):
         try:
             embed = discord.Embed(title=":headphones: - Now Playing", description='{0} - {1}'.format(playlist[self.playNow]['author'], playlist[self.playNow]['title']), color=color['normal'])
-            embed.url = playlist[self.playNow]['url']
             await message.channel.send(embed=embed)
         except:
             await message.channel.send(':warning: [링크 첨부] 권한이 부족합니다 :warning:')
             if self.message == message:
                 logger.error('Permission missing at {0}'.format(self.message.guild.id))
-                self.end()
 
 async def radio_play(message, voiceclient):
     try:
