@@ -1,0 +1,11 @@
+{
+    "auto_owner": true,
+    "owner_id": 0,
+    "color": {
+        "info": 16763981,
+        "normal": 16579836,
+        "warn": 13450043
+    },
+    "music_dir": "./data/music/",
+    "token_file": "./data/token.json"
+}
