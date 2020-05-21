@@ -59,6 +59,12 @@ except:
 
 if botToken == "#":
     botToken = getpass.getpass("What is **Your** Token: ")
+    try:
+        logger.info(f"Update Token at [{option['token_file']}]")
+        with open(option['token_file'], "w", encoding="utf8") as f:
+            f.write(json.dumps({"token": botToken}, indent=4))
+    except:
+        logger.critical(f"Fail to save Token at [{option['token_file']}]")
 ##################################################################################
 client = discord.Client()
 color = option['color']
@@ -154,15 +160,19 @@ class Radio:
             asyncio.Task(self.sendPlay(self.message), loop=client.loop)
         self.client.play(player, after=self.playnext)
 
-    async def sendPlay(self, message):        
-        try:
-            embed = discord.Embed(title=":headphones: - Now Playing", description=f"{playlist[self.playNow]['artist']} - {playlist[self.playNow]['title']}", color=color['normal'])
-            await message.channel.send(embed=embed)
-        except:
-            await message.channel.send(f"> :headphones: - Now Playing\n```{playlist[self.playNow]['artist']} - {playlist[self.playNow]['title']}```")
-            if self.message == message:
-                await message.channel.send(":warning: [링크 첨부] 권한이 부족합니다")
-                logger.warning(f"Permission missing at {self.message.guild.id}")
+    async def sendPlay(self, message):
+        if option['private_mode']:
+            return
+        else:
+            try:
+                embed = discord.Embed(title=":headphones: - Now Playing", description=f"{playlist[self.playNow]['artist']} - {playlist[self.playNow]['title']}", color=color['normal'])
+                await message.channel.send(embed=embed)
+            except:
+                await message.channel.send(f"> :headphones: - Now Playing\n```{playlist[self.playNow]['artist']} - {playlist[self.playNow]['title']}```")
+                if self.message == message:
+                    await message.channel.send(":warning: [링크 첨부] 권한이 부족합니다")
+                    logger.warning(f"Permission missing at {self.message.guild.id}")
+            return
 ##################################################################################
 async def radio_play(message, voiceclient):
     try:
@@ -273,6 +283,16 @@ async def on_message(message):
 ##################################################################################
     if message.content.startswith(";list") or message.content.startswith(";l") or message.content.startswith(";playlist") or message.content.startswith(";pl"):
         logger.info(f"[{message.author.id}]{message.author} use [{message.content}] command at [{message.guild.id}]")
+        if option['private_mode']:
+            logger.warning("private_mode is working")
+            try:
+                embed = discord.Embed(title="사용불가", description="보호모드가 활성화 되어있습니다", color=color['warn'])
+                await message.channel.send(embed=embed)
+                return
+            except:
+                await message.channel.send("> 사용불가\n```보호모드가 활성화 되어있습니다```")
+                return
+
         content = str(message.content).split()
         try:
             page = int(content[1])
@@ -420,6 +440,16 @@ async def on_message(message):
 
     if message.content.startswith(";nowplay") or message.content.startswith(";np"):
         logger.info(f"[{message.author.id}]{message.author} use [{message.content}] command at [{message.guild.id}]")
+        if option['private_mode']:
+            logger.warning("private_mode is working")
+            try:
+                embed = discord.Embed(title="사용불가", description="보호모드가 활성화 되어있습니다", color=color['warn'])
+                await message.channel.send(embed=embed)
+                return
+            except:
+                await message.channel.send("> 사용불가\n```보호모드가 활성화 되어있습니다```")
+                return
+
         try:
             await radioWorker[message.guild.id].sendPlay(message)
         except KeyError:
@@ -454,5 +484,16 @@ async def on_message(message):
             await message.channel.send(embed=embed)
         return
 ##################################################################################
-client.run(botToken)
+try:
+    client.run(botToken)
+except discord.errors.LoginFailure:
+    logger.critical("Invalid token loaded!!")
+    try:
+        logger.info(f"Reset Token at [{option['token_file']}]")
+        with open(option['token_file'], "w", encoding="utf8") as f:
+            f.write(json.dumps({"token": "#"}, indent=4))
+    except:
+        logger.critical("Fail to Reset Token")
+except Exception as e:
+    logger.critical(f"Bot is dead -> {e}")
 
