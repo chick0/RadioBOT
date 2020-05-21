@@ -434,7 +434,7 @@ async def on_message(message):
         except discord.errors.ClientException as e:
             logger.error(f"Radio connection error at {message.guild.id} [{e}]")
 
-            embed = discord.Embed(title="...", description="이미 음성 채널에 입장에 실패하였습니다",color=color['info'])
+            embed = discord.Embed(title="...", description="음성 채널에 입장에 실패하였습니다",color=color['info'])
             await message.channel.send(embed=embed)
         return
 
