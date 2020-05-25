@@ -15,7 +15,7 @@ newModule = list()
 try:
     import eyed3
 except ModuleNotFoundError:
-    newModule.append('eyeD3')
+    newModule.append('eyed3')
     subprocess.run(['pip3', 'install', 'eyeD3==0.9.5'])
 
 try:
