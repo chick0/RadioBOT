@@ -6,6 +6,7 @@
         "normal": 16579836,
         "warn": 13450043
     },
+    "prefix": ";",
     "private_mode": false,
     "music_dir": "./data/music/",
     "token_file": "./data/token.json"
