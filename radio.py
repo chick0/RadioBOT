@@ -449,14 +449,6 @@ async def leave_all(ctx):
     return
 
 
-@bot.command(hidden=True)
-@commands.check(is_owner)
-async def run(ctx):
-
-    await ctx.send(bot.get_command("join").help)
-    # bot.get_command()
-
-
 ##################################################################################
 # Radio Function - For @everyone
 
