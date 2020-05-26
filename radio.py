@@ -145,9 +145,9 @@ except Exception as e:
 ##################################################################################
 # Radio Class
 class Radio:
-    def __init__(self, ctx, voiceclient):
+    def __init__(self, ctx, voice_client):
         self.ctx = ctx
-        self.client = voiceclient
+        self.client = voice_client
         self.playNow = random.randint(0, len(playlist) - 1)
         self.played = [self.playNow]
         self.stat = [0, 0]
@@ -163,11 +163,11 @@ class Radio:
         return self.client
 
     def get_stat(self):
-        return (self.stat[0], self.stat[1])
+        return self.stat[0], self.stat[1]
 
-    def set_stat(self, mode, next):
-        self.stat[0] = mode
-        self.stat[1] = next
+    def set_stat(self, new_mode, new_next):
+        self.stat[0] = new_mode
+        self.stat[1] = new_next
 
     def play_next(self, error=None):
         if self.client.is_connected():
