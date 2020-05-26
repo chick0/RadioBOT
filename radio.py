@@ -300,7 +300,7 @@ async def radio_exit(ctx):
 
 async def radio_skip(ctx):
     try:
-        stat = radioWorker[ctx.guild.id].getstat()
+        stat = radioWorker[ctx.guild.id].get_stat()
         if stat[0] == 2:
             embed = discord.Embed(title="사용불가", description="반복재생 모드가 활성화 되어있습니다!", color=color['warn'])
             await ctx.send(embed=embed)
@@ -334,7 +334,7 @@ async def radio_nowplay(ctx):
 
 async def radio_repeat(ctx):
     try:
-        stat = radioWorker[ctx.guild.id].getstat()
+        stat = radioWorker[ctx.guild.id].get_stat()
         mode = str()
         if stat[0] == 2:
             mode = "일반재생"
