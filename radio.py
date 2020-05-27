@@ -80,7 +80,7 @@ try:
     else:
         logger.critical(f"Invalid token load from [{option['token_file']}]")
         botToken = "#"
-except Exception as e:
+except FileNotFoundError as e:
     logger.critical(f"Failed to load token from [{option['token_file']}] cause {e}")
     botToken = "#"
 
@@ -130,10 +130,14 @@ try:
                 logger.warning(f"Missing Title in [{musicFile}]")
                 title = "None"
             playlist.append({'artist': artist, 'title': title, 'name': musicFile})
-        except Exception:
-            logger.warning(f"drop {musicFile}")
+        except AttributeError:
+            logger.warning(f"Fail to get data from [{musicFile}]")
+            logger.warning(f"Remove [{musicFile}] from playlist")
     try:
-        playlist = sorted(playlist, key=lambda playlist: playlist['title'])
+        def get_titles(lists):
+            return lists['title']
+
+        playlist = sorted(playlist, key=get_titles)
     except Exception:
         logger.warning("Fail to sort playlist")
     logger.info(f"Music is Ready! + {len(playlist)}")
@@ -169,7 +173,10 @@ class Radio:
         self.stat[0] = new_mode
         self.stat[1] = new_next
 
-    def play_next(self, error=None):
+    def play_next(self, error):
+        if error is not None:
+            logger.error(f"Oops, radio player meet the [{error}]")
+
         if self.client.is_connected():
             if len(self.client.channel.members) == 1:
                 embed = discord.Embed(title=":deciduous_tree: :evergreen_tree: :deciduous_tree: :evergreen_tree:",
@@ -220,7 +227,7 @@ class Radio:
                                       description=f"{now_play[0]} - {now_play[1]}",
                                       color=color['normal'])
                 await ctx.send(embed=embed)
-            except:
+            except discord.errors.Forbidden:
                 await ctx.send(f"> :headphones: - Now Playing\n"
                                f"```{playlist[self.playNow]['artist']} - {playlist[self.playNow]['title']}```")
                 if self.ctx == ctx:
@@ -262,26 +269,10 @@ async def radio_join(ctx):
         await ctx.send(embed=embed)
         return
 
-    try:
-        if voice_client.is_playing():
-            embed = discord.Embed(title="저기요?", description="이미 라디오가 작동하고 있다는데..", color=color['info'])
-            await ctx.send(embed=embed)
-            return
-    except:
-        embed = discord.Embed(title="저기요?", description="라디오가 꺼저있다는데..", color=color['info'])
+    if voice_client.is_playing():
+        embed = discord.Embed(title="저기요?", description="이미 라디오가 작동하고 있다는데..", color=color['info'])
         await ctx.send(embed=embed)
         return
-
-    if not discord.opus.is_loaded():
-        try:
-            logger.info("Loading OPUS...")
-            discord.opus._load_default()
-        except Exception:
-            logger.critical("OPUS Loading fail!!!")
-
-            embed = discord.Embed(title="Warning!", description="OPUS Loading fail!!!", color=color['warn'])
-            await ctx.send(embed=embed)
-            return
 
     radioWorker[ctx.guild.id] = Radio(ctx, voice_client)
     radioWorker[ctx.guild.id].play_radio()
@@ -319,7 +310,7 @@ async def radio_nowplay(ctx):
         try:
             embed = discord.Embed(title="사용불가", description="보호모드가 활성화 되어있습니다", color=color['warn'])
             await ctx.send(embed=embed)
-        except:
+        except discord.errors.Forbidden:
             await ctx.send("> 사용불가\n```보호모드가 활성화 되어있습니다```")
         return
 
@@ -356,7 +347,7 @@ async def radio_repeat(ctx):
 async def radio_play(ctx, query):
     try:
         play_next = int(query)
-    except:
+    except ValueError:
         embed = discord.Embed(title="어..", description="재생 지정은 번호로만 지정이 가능해요", color=color['info'])
         await ctx.send(embed=embed)
         return
@@ -453,7 +444,6 @@ async def leave_all(ctx):
 
 ##################################################################################
 # Radio Function - For @everyone
-
 @bot.command()
 @commands.check(is_public)
 async def help(ctx):
