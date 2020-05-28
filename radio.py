@@ -442,7 +442,7 @@ async def leave_all(ctx):
     await ctx.send("켜저있는 다른 라디오를 모두 종료합니다.")
     key = list(radioWorker.keys())
     for temp_key in key:
-        await radioWorker[temp_key].get_ctx().send("봇 관리자에 의하여 라디오가 종료되었습니다.")
+        await radioWorker[temp_key].get_ctx().send("`봇 관리자에 의하여 라디오가 종료되었습니다.`")
         await radioWorker[temp_key].get_client().disconnect()
     return
 
