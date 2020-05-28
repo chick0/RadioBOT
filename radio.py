@@ -26,6 +26,7 @@ except ModuleNotFoundError:
     import discord
     from discord.ext import commands, tasks
 ##################################################################################
+# Logger Setting
 log_formatter = logging.Formatter(
     "%(asctime)s [%(levelname)s]: %(message)s",
     "%Y-%m-%d %H:%M:%S"
@@ -49,6 +50,7 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(log_formatter)
 logger.addHandler(console_handler)
 ##################################################################################
+# Loading Option
 option_file = "option.json"
 logger.info(f"Loading Option from [{option_file}]")
 try:
@@ -70,8 +72,8 @@ except FileNotFoundError:
     }
     with open(option_file, "w", encoding="utf8") as option_f:
         option_f.write(json.dumps(option, indent=4))
-del option_file
 ##################################################################################
+# Loading Token
 logger.info(f"Loading Token from [{option['token_file']}]")
 try:
     botToken = json.load(open(option['token_file']))['token']
@@ -93,6 +95,7 @@ if botToken == "#":
     except Exception as e:
         logger.critical(f"Fail to save Token at [{option['token_file']}] cause {e}")
 ##################################################################################
+# Global variable
 color = option['color']
 prefix = option['prefix']
 radioWorker, playlist = dict(), list()
@@ -102,6 +105,7 @@ bot.remove_command('help')
 
 
 ##################################################################################
+# etc.. Function
 def dump_guild():
     guilds = list(bot.guilds)
     result = list()
@@ -137,9 +141,10 @@ try:
         def get_titles(lists):
             return lists['title']
 
+
         playlist = sorted(playlist, key=get_titles)
-    except Exception:
-        logger.warning("Fail to sort playlist")
+    except TypeError:
+        logger.warning("Fail to sort playlist!!")
     logger.info(f"Music is Ready! + {len(playlist)}")
 except Exception as e:
     logger.critical(f"Can't Load music at [{option['music_dir']}] cause {e}")
@@ -442,6 +447,58 @@ async def leave_all(ctx):
     return
 
 
+@bot.command(hidden=True)
+@commands.check(is_owner)
+async def change_set(ctx, option_name=None, option_value=None):
+    if option_name is None or option_value is None:
+        try:
+            embed = discord.Embed(title="잘못된 사용법", description=f"{prefix}change_set [<옵션 명>] [<값>]",
+                                  color=color['warn'])
+            await ctx.send(embed=embed)
+        except discord.errors.Forbidden:
+            await ctx.send(":warning: [링크 첨부] 권한이 부족합니다")
+            await ctx.send(f"> 잘못된 사용법\n```{prefix}change_set [<옵션 명>] [<값>]```")
+        return
+    option_able = list(json.load(open(option_file)).keys())
+    if option_name not in option_able:
+        try:
+            embed = discord.Embed(title="지원하지 않는 옵션", description=f"옵션 명\n```{option_able}```", color=color['warn'])
+            await ctx.send(embed=embed)
+        except discord.errors.Forbidden:
+            await ctx.send(":warning: [링크 첨부] 권한이 부족합니다")
+            await ctx.send(f"> 지원하지 않는 옵션\n```{option_able}```")
+        return
+
+    try:
+        embed = discord.Embed(title="변경 완료!", description=f"변경한 옵션```{option_name}```\n"
+                                                          f"변경 전 / 변경 후```{option[option_name]} / {option_value}```",
+                              color=color['normal'])
+        await ctx.send(embed=embed)
+    except discord.errors.Forbidden:
+        await ctx.send(":warning: [링크 첨부] 권한이 부족합니다")
+        await ctx.send(f"> 변경 완료!\n변경한 옵션```{option_name}```\n",
+                       f"변경 전 / 변경 후```{option[option_name]} / {option_value}```")
+    try:
+        if isinstance(option[option_name], int):
+            option[option_name] = int(option_value)
+        elif isinstance(option[option_name], bool):
+            option[option_name] = bool(option_value)
+        elif isinstance(option[option_name], dict):
+            option[option_name] = dict(option_value)
+        elif isinstance(option[option_name], str):
+            option[option_name] = str(option_value)
+        else:
+            raise ValueError
+    except ValueError:
+        await ctx.send("`옵션 값이 잘못되어 변경이 취소 됩니다`")
+        return
+
+    await ctx.send(":warning: 옵션이 변경되었습니다, 일부 옵션은 봇을 다시 시작해야 적용됩니다")
+    logger.warning("Option Changed, please restart bot")
+    with open(option_file, "w", encoding="utf8") as option_change:
+        option_change.write(json.dumps(option, indent=4))
+
+
 ##################################################################################
 # Radio Function - For @everyone
 @bot.command()
@@ -511,7 +568,7 @@ async def search(ctx, query=None):
 
 
 ##################################################################################
-# Radio Short Function - For @everyone
+# Radio **Short** Function - For @everyone
 @bot.command(hidden=True)
 @commands.check(is_public)
 async def h(ctx):
@@ -585,6 +642,11 @@ async def on_command_error(ctx, error):
 @bot.event
 async def on_ready():
     auto = await bot.application_info()
+    if auto.bot_public and option['private_mode']:
+        logger.warning("This BOT is Public bot!")
+        logger.warning("Private mode is now OFF")
+        option['private_mode'] = False
+
     if option['auto_owner']:
         option['owner_id'] = auto.owner.id
     await bot.change_presence(status=discord.Status.idle,
@@ -620,3 +682,4 @@ except discord.errors.LoginFailure:
         logger.critical(f"Fail to Reset Token -> {e}")
 except Exception as e:
     logger.critical(f"Bot is dead -> {e}")
+
