@@ -34,7 +34,7 @@ log_formatter = logging.Formatter(
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-boot_time = time.strftime("%Y-%m-%d %H%M", time.localtime(time.time()))
+boot_time = time.strftime("%Y-%m-%d %HH %MM", time.localtime(time.time()))
 try:
     file_handler = logging.FileHandler(f"log/radio_{boot_time}.log")
     file_handler.setFormatter(log_formatter)
@@ -55,6 +55,8 @@ option_file = "option.json"
 logger.info(f"Loading Option from [{option_file}]")
 try:
     option = json.load(open(option_file))
+    if option['music_dir'][-1] != "/":
+        option['music_dir'] = f"{option['music_dir']}/"
 except FileNotFoundError:
     logger.info(f"[{option_file}] not found, load default settings")
     option = {
