@@ -36,12 +36,12 @@ logger.setLevel(logging.INFO)
 
 boot_time = time.strftime("%Y-%m-%d %HH %MM", time.localtime(time.time()))
 try:
-    file_handler = logging.FileHandler(f"log/radio_{boot_time}.log")
+    file_handler = logging.FileHandler(f"log/{boot_time}.log")
     file_handler.setFormatter(log_formatter)
     logger.addHandler(file_handler)
 except FileNotFoundError:
     os.mkdir("log/")
-    file_handler = logging.FileHandler(f"log/radio_{boot_time}.log")
+    file_handler = logging.FileHandler(f"log/{boot_time}.log")
     file_handler.setFormatter(log_formatter)
     logger.addHandler(file_handler)
 del boot_time
@@ -69,6 +69,7 @@ except FileNotFoundError:
         },
         "prefix": ";",
         "private_mode": False,
+        "guild_data": "./data/guild.json",
         "music_dir": "./data/music/",
         "token_file": "./data/token.json"
     }
@@ -104,18 +105,6 @@ radioWorker, playlist = dict(), list()
 
 bot = commands.Bot(command_prefix=prefix)
 bot.remove_command('help')
-
-
-##################################################################################
-# etc.. Function
-def dump_guild():
-    guilds = list(bot.guilds)
-    result = list()
-    for temp_guild in guilds:
-        t_d = {'id': temp_guild.id, 'name': temp_guild.name}
-        result.append(t_d)
-    with open("data/guild.json", "w", encoding="utf8") as guild:
-        guild.write(json.dumps(result, sort_keys=True, indent=4))
 
 
 ##################################################################################
@@ -661,13 +650,18 @@ async def on_ready():
         logger.warning("BOT Owner is not the same as Auto Detect mode")
         logger.warning(f"Auto Detect Owner -> {auto.owner.id} / {auto.owner}")
     logger.info("-" * 50)
-    logger.info(
-        f"invite bot: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=52224&scope=bot")
+    logger.info(f"invite bot: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}"
+                f"&permissions=52224&scope=bot")
     logger.info("-" * 50)
     logger.info(f"Connected to {len(bot.guilds)} servers")
-    logger.info("-> data/guild.json")
+    result = list()
+    for temp_guild in bot.guilds:
+        logger.info(f" - Name: {temp_guild.name}")
+        result.append({'id': temp_guild.id, 'name': temp_guild.name})
     logger.info("-" * 50)
-    dump_guild()
+    with open(option['guild_data'], "w", encoding="utf8") as guild:
+        guild.write(json.dumps(result, sort_keys=True, indent=4))
+    logger.info("-" * 50)
 
 
 ##################################################################################
@@ -684,4 +678,3 @@ except discord.errors.LoginFailure:
         logger.critical(f"Fail to Reset Token -> {e}")
 except Exception as e:
     logger.critical(f"Bot is dead -> {e}")
-

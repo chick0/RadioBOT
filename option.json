@@ -8,6 +8,7 @@
     },
     "prefix": ";",
     "private_mode": false,
+    "guild_data": "./data/guild.json",
     "music_dir": "./data/music/",
     "token_file": "./data/token.json"
 }
