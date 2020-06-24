@@ -2,14 +2,16 @@
 discord.py를 사용해서 만든 디스코드 라디오 봇
 
 ## 실행 전 설정
-1. 음악 풀더에 음악 채우기 ( 기본위치: data/music/ )
+1. 음악 풀더에 음악 채우기 ( 기본위치: ./data/music/ )
     1. 또는 본인의 음악 풀더로 설정 수정하기
 2. 디스코드 개발자 센터에서 자신의 봇 만들기
 3. 토큰 복사 해두고 다른 사람한테 알리지 않기
 
 ## 실행 방법
 1. radio.py 파일을 실행하기
-2. "첫 실행시" 필수 라이브러리가 설치되므로 기다립니다
+2. "첫 실행시" 필수 라이브러리가 설치되므로 기다려주세요
+    1. 실패시 다음의 라이브러리를 수동으로 설치해주세요
+    2. discord, discord.py, PyNaCl, eyeD3
 3. "첫 실행시" 토큰을 입력합니다
 
 ## 명령어
@@ -42,17 +44,29 @@ discord.py를 사용해서 만든 디스코드 라디오 봇
 설정 파일을 수정하고 봇이 정상적으로 실행되지 않는다면
 설정파일을 삭제해서 봇이 초기화 하도록 해주세요.
 <pre>
-{
-    "auto_owner": [자동 주인 감지 (기본값: true)(true/false)],
-    "owner_id": [봇 주인 id (기본값: 0)],
+    &#91;봇 주인 자동 감지 (기본값: true)&#93;
+    auto_owner:(true/false)
+    
+    &#91;봇 주인 id (기본값: 0)&#93;
+    owner_id: (int),
+    
+    &#91;색깔 수정 비권장&#93;
     "color": {
-        "info": 16763981,
-        "normal": 16579836,
-        "warn": 13450043
-    },
-    "prefix": [접두사 (기본값: ;)],
-    "private_mode": [보호모드 활성화 여부 (기본값: false)(true/false)],
-    "music_dir": [음악 인식풀더 (기본값: ./data/music/)],
-    "token_file": [로그인용 토큰 저장위치 (기본값: ./data/token.json)]
+        "info": (int),
+        "normal": (int),
+        "warn": (int)
+    }
+    
+    &#91;접두사 (기본값: ;)&#93;
+    prefix: ";"
+    
+    &#91;보호모드 활성화 여부 (기본값: false)&#93;
+    private_mode: (true/false)
+    
+    &#91;봇이 접속한 길드 저장 여부 (기본값: false)&#93;
+    save_guild_data: (true/false)
+    
+    &#91;음악 인식풀더 (기본값: ./data/music/)&#93;
+    music_dir: "./data/music/",
 }
 </pre>

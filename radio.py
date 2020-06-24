@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
 import time
 import json
 import random
@@ -13,16 +12,16 @@ import subprocess
 try:
     import eyed3
 except ModuleNotFoundError:
-    subprocess.run(['pip3', 'install', 'eyeD3==0.9.5'])
+    subprocess.run(['pip', 'install', 'eyeD3==0.9.5'])
     import eyed3
 
 try:
     import discord
     from discord.ext import commands, tasks
 except ModuleNotFoundError:
-    subprocess.run(['pip3', 'install', 'discord==1.0.1'])
-    subprocess.run(['pip3', 'install', 'discord.py==1.3.2'])
-    subprocess.run(['pip3', 'install', 'PyNaCl==1.3.0'])
+    subprocess.run(['pip', 'install', 'discord==1.0.1'])
+    subprocess.run(['pip', 'install', 'discord.py==1.3.2'])
+    subprocess.run(['pip', 'install', 'PyNaCl==1.3.0'])
     import discord
     from discord.ext import commands, tasks
 ##################################################################################
@@ -44,11 +43,22 @@ except FileNotFoundError:
     file_handler = logging.FileHandler(f"log/{boot_time}.log")
     file_handler.setFormatter(log_formatter)
     logger.addHandler(file_handler)
-del boot_time
 
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(log_formatter)
 logger.addHandler(console_handler)
+##################################################################################
+# Checking Essential directory
+try:
+    logger.info("Checking Essential directory...")
+    with open("./data/check_data_directory", "w", encoding="utf8") as test_f:
+        test_f.write(boot_time)
+    logger.info("OK! - Essential directory is alive")
+except FileNotFoundError:
+    logger.info("FAIL - Directory not found")
+    os.mkdir("data/")
+
+del boot_time
 ##################################################################################
 # Loading Option
 option_file = "option.json"
@@ -57,8 +67,9 @@ try:
     option = json.load(open(option_file))
     if option['music_dir'][-1] != "/":
         option['music_dir'] = f"{option['music_dir']}/"
+    logger.info("OK! - Option is loaded")
 except FileNotFoundError:
-    logger.info(f"[{option_file}] not found, load default settings")
+    logger.info(f"FAIL - [{option_file}] not found, load default settings")
     option = {
         "auto_owner": True,
         "owner_id": 0,
@@ -69,34 +80,49 @@ except FileNotFoundError:
         },
         "prefix": ";",
         "private_mode": False,
-        "guild_data": "./data/guild.json",
-        "music_dir": "./data/music/",
-        "token_file": "./data/token.json"
+        "save_guild_data": False,
+        "music_dir": "./data/music/"
     }
-    with open(option_file, "w", encoding="utf8") as option_f:
-        option_f.write(json.dumps(option, indent=4))
+
+    logger.info("Creating Option File...")
+    try:
+        with open(option_file, "w", encoding="utf8") as option_f:
+            option_f.write(json.dumps(option, indent=4))
+        logger.info("OK! - Option File created")
+    except Exception as e:
+        logger.info(f"FAIL - Fail to create option file -> {e}")
 ##################################################################################
 # Loading Token
-logger.info(f"Loading Token from [{option['token_file']}]")
+logger.info("Loading Token...")
 try:
-    botToken = json.load(open(option['token_file']))['token']
+    logger.info("OK! - File exists")
+    botToken = json.load(open("token.json"))['token']
+    logger.info("Token length check...")
     if len(botToken) == 59:
-        logger.info("Token is Ready!")
+        logger.info("OK! - Token is Ready!")
     else:
-        logger.critical(f"Invalid token load from [{option['token_file']}]")
+        logger.critical("FAIL - Invalid token detected")
         botToken = "#"
-except FileNotFoundError as e:
-    logger.critical(f"Failed to load token from [{option['token_file']}] cause {e}")
+except FileNotFoundError:
+    logger.critical("Token File Not Found")
     botToken = "#"
 
 if botToken == "#":
+    logger.info("READY - Get Token from console input")
     botToken = getpass.getpass("What is **Your** Token: ")
-    try:
-        logger.info(f"Update Token at [{option['token_file']}]")
-        with open(option['token_file'], "w", encoding="utf8") as f:
-            f.write(json.dumps({"token": botToken}, indent=4))
-    except Exception as e:
-        logger.critical(f"Fail to save Token at [{option['token_file']}] cause {e}")
+    logger.info("Token length check...")
+    if len(botToken) == 59:
+        logger.info("OK! - Token is Ready!")
+        try:
+            logger.info("Update Token data...")
+            with open("token.json", "w", encoding="utf8") as f:
+                f.write(json.dumps({"token": botToken}, indent=4))
+            logger.info("OK! - Token is Updated!")
+        except Exception as e:
+            logger.critical(f"FAIL - {e}")
+    else:
+        logger.critical("FAIL - Invalid token detected")
+        botToken = "#"
 ##################################################################################
 # Global variable
 color = option['color']
@@ -104,12 +130,11 @@ prefix = option['prefix']
 radioWorker, playlist = dict(), list()
 
 bot = commands.Bot(command_prefix=prefix)
-bot.remove_command('help')
 
 
 ##################################################################################
 # Loading music!
-logger.info(f"Loading music from [{option['music_dir']}]...")
+logger.info(f"Loading music from Music Directory...")
 try:
     musicFiles = os.listdir(option['music_dir'])
     for musicFile in musicFiles:
@@ -136,10 +161,10 @@ try:
         playlist = sorted(playlist, key=get_titles)
     except TypeError:
         logger.warning("Fail to sort playlist!!")
-    logger.info(f"Music is Ready! + {len(playlist)}")
+    logger.info(f"OK! - Music is Ready! + {len(playlist)}")
 except Exception as e:
-    logger.critical(f"Can't Load music at [{option['music_dir']}] cause {e}")
-    sys.exit(-1)
+    logger.critical(f"FAIL - Fail to load music / {e}")
+    logger.warning("Playlist is EMPTY!")
 
 
 ##################################################################################
@@ -234,20 +259,6 @@ class Radio:
 
 ##################################################################################
 # Radio Worker
-async def radio_help(ctx):
-    embed = discord.Embed(title="도움말", color=color['normal'])
-    embed.add_field(name=f"{prefix}join", value=bot.get_command("join").help, inline=False)
-    embed.add_field(name=f"{prefix}exit", value=bot.get_command("exit").help, inline=False)
-    embed.add_field(name=f"{prefix}skip", value=bot.get_command("skip").help, inline=False)
-    embed.add_field(name=f"{prefix}nowplay", value=bot.get_command("nowplay").help, inline=False)
-
-    embed.add_field(name=f"{prefix}repeat", value=bot.get_command("repeat").help, inline=False)
-    embed.add_field(name=f"{prefix}play [<트랙번호>]", value=bot.get_command("play").help, inline=False)
-    embed.add_field(name=f"{prefix}search [<검색어>]", value=bot.get_command("search").help, inline=False)
-    await ctx.send(embed=embed)
-    return
-
-
 async def radio_join(ctx):
     try:
         logger.info(f"Radio Connected at {ctx.guild.id}")
@@ -494,13 +505,6 @@ async def change_set(ctx, option_name=None, option_value=None):
 # Radio Function - For @everyone
 @bot.command()
 @commands.check(is_public)
-async def help(ctx):
-    """라디오의 설명서를 봅니다"""
-    await radio_help(ctx)
-
-
-@bot.command()
-@commands.check(is_public)
 async def join(ctx):
     """라디오의 전원을 킵니다! (음성채널에 입장해야 합니다.)"""
     await radio_join(ctx)
@@ -562,12 +566,6 @@ async def search(ctx, query=None):
 # Radio **Short** Function - For @everyone
 @bot.command(hidden=True)
 @commands.check(is_public)
-async def h(ctx):
-    await radio_help(ctx)
-
-
-@bot.command(hidden=True)
-@commands.check(is_public)
 async def j(ctx):
     await radio_join(ctx)
 
@@ -627,7 +625,7 @@ async def on_command(ctx):
 
 @bot.event
 async def on_command_error(ctx, error):
-    logger.error(f"[{ctx.author.id}]{ctx.author} meet the [{error}] error at [{ctx.guild.id}]")
+    logger.error(f"[{ctx.author.id}]{ctx.author} meet the [{error}] at [{ctx.guild.id}]")
 
 
 @bot.event
@@ -659,22 +657,25 @@ async def on_ready():
         logger.info(f" - Name: {temp_guild.name}")
         result.append({'id': temp_guild.id, 'name': temp_guild.name})
     logger.info("-" * 50)
-    with open(option['guild_data'], "w", encoding="utf8") as guild:
-        guild.write(json.dumps(result, sort_keys=True, indent=4))
-    logger.info("-" * 50)
-
-
+    if option['save_guild_data'] is True:
+        with open("./data/guild.json", "w", encoding="utf8") as guild_f:
+            guild_f.write(json.dumps(result, sort_keys=True, indent=4))
 ##################################################################################
 # BOT Start
 try:
+    logger.info("RadioBOT Starting...")
     bot.run(botToken)
 except discord.errors.LoginFailure:
-    logger.critical("Invalid token loaded!!")
+    logger.critical("**Invalid token loaded!!**")
     try:
-        logger.info(f"Reset Token at [{option['token_file']}]")
-        with open(option['token_file'], "w", encoding="utf8") as f:
+        logger.info("Reset Token")
+        with open("token.json", "w", encoding="utf8") as f:
             f.write(json.dumps({"token": "#"}, indent=4))
+        logger.info("OK! - Token is now the default value")
     except Exception as e:
-        logger.critical(f"Fail to Reset Token -> {e}")
+        logger.critical(f"FAIL - {e}")
 except Exception as e:
-    logger.critical(f"Bot is dead -> {e}")
+    logger.critical("="*30)
+    logger.critical("<< Bot is dead >>")
+    logger.critical(e)
+    logger.critical("="*30)
