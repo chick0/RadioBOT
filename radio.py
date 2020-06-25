@@ -46,18 +46,17 @@ except FileNotFoundError:
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(log_formatter)
 logger.addHandler(console_handler)
+del boot_time
 ##################################################################################
 # Checking Essential directory
 try:
     logger.info("Checking Essential directory...")
     with open("./data/check_data_directory", "w", encoding="utf8") as test_f:
-        test_f.write(boot_time)
+        test_f.write("OK! - Essential directory is alive")
     logger.info("OK! - Essential directory is alive")
 except FileNotFoundError:
     logger.info("FAIL - Directory not found")
     os.mkdir("data/")
-
-del boot_time
 ##################################################################################
 # Setting
 option = option_manager.get_option()
