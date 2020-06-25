@@ -44,29 +44,28 @@ discord.py를 사용해서 만든 디스코드 라디오 봇
 설정 파일을 수정하고 봇이 정상적으로 실행되지 않는다면
 설정파일을 삭제해서 봇이 초기화 하도록 해주세요.
 <pre>
-    &#91;봇 주인 자동 감지 (기본값: true)&#93;
-    auto_owner:(true/false)
-    
-    &#91;봇 주인 id (기본값: 0)&#93;
-    owner_id: (int),
-    
-    &#91;색깔 수정 비권장&#93;
-    "color": {
-        "info": (int),
-        "normal": (int),
-        "warn": (int)
-    }
-    
-    &#91;접두사 (기본값: ;)&#93;
-    prefix: ";"
-    
-    &#91;보호모드 활성화 여부 (기본값: false)&#93;
-    private_mode: (true/false)
-    
-    &#91;봇이 접속한 길드 저장 여부 (기본값: false)&#93;
-    save_guild_data: (true/false)
-    
-    &#91;음악 인식풀더 (기본값: ./data/music/)&#93;
-    music_dir: "./data/music/",
+&#91;봇 주인 자동 감지 (기본값: true)&#93;
+auto_owner:(true/false)
+
+&#91;봇 주인 id (기본값: 0)&#93;
+owner_id: (int),
+
+&#91;색깔 수정 비권장&#93;
+"color": {
+    "info": (int),
+    "normal": (int),
+    "warn": (int)
 }
+
+&#91;접두사 (기본값: ;)&#93;
+prefix: ";"
+
+&#91;보호모드 활성화 여부 (기본값: false)&#93;
+private_mode: (true/false)
+
+&#91;봇이 접속한 길드 저장 여부 (기본값: false)&#93;
+save_guild_data: (true/false)
+
+&#91;음악 인식풀더 (기본값: ./data/music/)&#93;
+music_dir: "./data/music/"
 </pre>

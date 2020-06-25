@@ -6,14 +6,7 @@ import json
 import random
 import logging
 import asyncio
-import getpass
 import subprocess
-
-try:
-    import eyed3
-except ModuleNotFoundError:
-    subprocess.run(['pip', 'install', 'eyeD3==0.9.5'])
-    import eyed3
 
 try:
     import discord
@@ -24,6 +17,12 @@ except ModuleNotFoundError:
     subprocess.run(['pip', 'install', 'PyNaCl==1.3.0'])
     import discord
     from discord.ext import commands, tasks
+
+import data.lib.option as option_manager
+import data.lib.token_manager as token_manager
+import data.lib.playlist_loader as playlist
+# import data.lib.yt_get_playlist as playlist_yt
+# import data.lib.yt_download as yt_download
 ##################################################################################
 # Logger Setting
 log_formatter = logging.Formatter(
@@ -60,111 +59,13 @@ except FileNotFoundError:
 
 del boot_time
 ##################################################################################
-# Loading Option
-option_file = "option.json"
-logger.info(f"Loading Option from [{option_file}]")
-try:
-    option = json.load(open(option_file))
-    if option['music_dir'][-1] != "/":
-        option['music_dir'] = f"{option['music_dir']}/"
-    logger.info("OK! - Option is loaded")
-except FileNotFoundError:
-    logger.info(f"FAIL - [{option_file}] not found, load default settings")
-    option = {
-        "auto_owner": True,
-        "owner_id": 0,
-        "color": {
-            "info": 16763981,
-            "normal": 16579836,
-            "warn": 13450043
-        },
-        "prefix": ";",
-        "private_mode": False,
-        "save_guild_data": False,
-        "music_dir": "./data/music/"
-    }
+# Setting
+option = option_manager.get_option()
+bot_token = token_manager.get_token()
+playlist = playlist.get_playlist()
 
-    logger.info("Creating Option File...")
-    try:
-        with open(option_file, "w", encoding="utf8") as option_f:
-            option_f.write(json.dumps(option, indent=4))
-        logger.info("OK! - Option File created")
-    except Exception as e:
-        logger.info(f"FAIL - Fail to create option file -> {e}")
-##################################################################################
-# Loading Token
-logger.info("Loading Token...")
-try:
-    logger.info("OK! - File exists")
-    botToken = json.load(open("token.json"))['token']
-    logger.info("Token length check...")
-    if len(botToken) == 59:
-        logger.info("OK! - Token is Ready!")
-    else:
-        logger.critical("FAIL - Invalid token detected")
-        botToken = "#"
-except FileNotFoundError:
-    logger.critical("Token File Not Found")
-    botToken = "#"
-
-if botToken == "#":
-    logger.info("READY - Get Token from console input")
-    botToken = getpass.getpass("What is **Your** Token: ")
-    logger.info("Token length check...")
-    if len(botToken) == 59:
-        logger.info("OK! - Token is Ready!")
-        try:
-            logger.info("Update Token data...")
-            with open("token.json", "w", encoding="utf8") as f:
-                f.write(json.dumps({"token": botToken}, indent=4))
-            logger.info("OK! - Token is Updated!")
-        except Exception as e:
-            logger.critical(f"FAIL - {e}")
-    else:
-        logger.critical("FAIL - Invalid token detected")
-        botToken = "#"
-##################################################################################
-# Global variable
-color = option['color']
-prefix = option['prefix']
-radioWorker, playlist = dict(), list()
-
-bot = commands.Bot(command_prefix=prefix)
-
-
-##################################################################################
-# Loading music!
-logger.info(f"Loading music from Music Directory...")
-try:
-    musicFiles = os.listdir(option['music_dir'])
-    for musicFile in musicFiles:
-        try:
-            media = eyed3.load(option['music_dir'] + musicFile)
-            artist = media.tag.artist
-            title = media.tag.title
-
-            if artist is None:
-                logger.warning(f"Missing artist in [{musicFile}]")
-                artist = "None"
-            if title is None:
-                logger.warning(f"Missing Title in [{musicFile}]")
-                title = "None"
-            playlist.append({'artist': artist, 'title': title, 'name': musicFile})
-        except AttributeError:
-            logger.warning(f"Fail to get data from [{musicFile}]")
-            logger.warning(f"Remove [{musicFile}] from playlist")
-    try:
-        def get_titles(lists):
-            return lists['title']
-
-
-        playlist = sorted(playlist, key=get_titles)
-    except TypeError:
-        logger.warning("Fail to sort playlist!!")
-    logger.info(f"OK! - Music is Ready! + {len(playlist)}")
-except Exception as e:
-    logger.critical(f"FAIL - Fail to load music / {e}")
-    logger.warning("Playlist is EMPTY!")
+bot = commands.Bot(command_prefix=option['prefix'])
+radioWorker = dict()
 
 
 ##################################################################################
@@ -201,7 +102,7 @@ class Radio:
         if self.client.is_connected():
             if len(self.client.channel.members) == 1:
                 embed = discord.Embed(title=":deciduous_tree: :evergreen_tree: :deciduous_tree: :evergreen_tree:",
-                                      description="전기와 트래픽을 아껴주세요!", color=color['info'])
+                                      description="전기와 트래픽을 아껴주세요!", color=option['color']['info'])
                 asyncio.run_coroutine_threadsafe(self.ctx.send(embed=embed), bot.loop)
                 asyncio.run_coroutine_threadsafe(self.client.disconnect(), bot.loop)
             else:
@@ -246,7 +147,7 @@ class Radio:
                 now_play = [playlist[self.playNow]['artist'], playlist[self.playNow]['title']]
                 embed = discord.Embed(title=":headphones: - Now Playing",
                                       description=f"{now_play[0]} - {now_play[1]}",
-                                      color=color['normal'])
+                                      color=option['color']['normal'])
                 await ctx.send(embed=embed)
             except discord.errors.Forbidden:
                 await ctx.send(f"> :headphones: - Now Playing\n"
@@ -266,18 +167,18 @@ async def radio_join(ctx):
     except AttributeError as join_error_AttributeError:
         logger.error(f"Radio connection error at {ctx.guild.id} [{join_error_AttributeError}]")
 
-        embed = discord.Embed(title="...", description="음성 채널 입장후 다시 시도해 주세요.", color=color['info'])
+        embed = discord.Embed(title="...", description="음성 채널 입장후 다시 시도해 주세요.", color=option['color']['info'])
         await ctx.send(embed=embed)
         return
     except discord.errors.ClientException as join_error_ClientException:
         logger.error(f"Radio connection error at {ctx.guild.id} [{join_error_ClientException}]")
 
-        embed = discord.Embed(title="...", description="음성 채널에 입장에 실패하였습니다", color=color['info'])
+        embed = discord.Embed(title="...", description="음성 채널에 입장에 실패하였습니다", color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
     if voice_client.is_playing():
-        embed = discord.Embed(title="저기요?", description="이미 라디오가 작동하고 있다는데..", color=color['info'])
+        embed = discord.Embed(title="저기요?", description="이미 라디오가 작동하고 있다는데..", color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
@@ -291,7 +192,7 @@ async def radio_exit(ctx):
         await ctx.send(":wave:")
     except KeyError:
         logger.error(f"No radioWorker at {ctx.guild.id}")
-        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=color['info'])
+        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=option['color']['info'])
         await ctx.send(embed=embed)
     return
 
@@ -300,13 +201,13 @@ async def radio_skip(ctx):
     try:
         stat = radioWorker[ctx.guild.id].get_stat()
         if stat[0] == 2:
-            embed = discord.Embed(title="사용불가", description="반복재생 모드가 활성화 되어있습니다!", color=color['warn'])
+            embed = discord.Embed(title="사용불가", description="반복재생 모드가 활성화 되어있습니다!", color=option['color']['warn'])
             await ctx.send(embed=embed)
         else:
             radioWorker[ctx.guild.id].get_client().stop()
     except KeyError:
         logger.error(f"No radioWorker at {ctx.guild.id}")
-        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=color['info'])
+        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=option['color']['info'])
         await ctx.send(embed=embed)
     return
 
@@ -315,7 +216,7 @@ async def radio_nowplay(ctx):
     if option['private_mode']:
         logger.warning("[private_mode] is working")
         try:
-            embed = discord.Embed(title="사용불가", description="보호모드가 활성화 되어있습니다", color=color['warn'])
+            embed = discord.Embed(title="사용불가", description="보호모드가 활성화 되어있습니다", color=option['color']['warn'])
             await ctx.send(embed=embed)
         except discord.errors.Forbidden:
             await ctx.send("> 사용불가\n```보호모드가 활성화 되어있습니다```")
@@ -325,7 +226,7 @@ async def radio_nowplay(ctx):
         await radioWorker[ctx.guild.id].send_play(ctx)
     except KeyError:
         logger.error(f"No radioWorker at {ctx.guild.id}")
-        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=color['info'])
+        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=option['color']['info'])
         await ctx.channel.send(embed=embed)
     return
 
@@ -341,11 +242,11 @@ async def radio_repeat(ctx):
             mode = "반복"
             radioWorker[ctx.guild.id].set_stat(2, 0)
 
-        embed = discord.Embed(title="변경완료!", description=f"{mode} 모드가 활성화 되었습니다!", color=color['normal'])
+        embed = discord.Embed(title="변경완료!", description=f"{mode} 모드가 활성화 되었습니다!", color=option['color']['normal'])
         await ctx.send(embed=embed)
     except KeyError:
         logger.error(f"No Radio Worker at {ctx.guild.id}")
-        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=color['info'])
+        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=option['color']['info'])
         await ctx.send(embed=embed)
         return
     return
@@ -355,12 +256,12 @@ async def radio_play(ctx, query):
     try:
         play_next = int(query)
     except ValueError:
-        embed = discord.Embed(title="어..", description="재생 지정은 번호로만 지정이 가능해요", color=color['info'])
+        embed = discord.Embed(title="어..", description="재생 지정은 번호로만 지정이 가능해요", color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
     if play_next < 0 or play_next > len(playlist) - 1:
-        embed = discord.Embed(title="어...", description="해당 트랙은 확인되지 않았습니다", color=color['info'])
+        embed = discord.Embed(title="어...", description="해당 트랙은 확인되지 않았습니다", color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
@@ -369,11 +270,11 @@ async def radio_play(ctx, query):
         embed = discord.Embed(title="설정 완료!",
                               description=f"다음은 [{playlist[play_next]['artist']}]의 "
                                           f"[{playlist[play_next]['title']}](이)가 재생됩니다",
-                              color=color['normal'])
+                              color=option['color']['normal'])
         await ctx.send(embed=embed)
     except KeyError:
         logger.error(f"No Radio Worker at {ctx.guild.id}")
-        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=color['info'])
+        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=option['color']['info'])
         await ctx.send(embed=embed)
         return
     return
@@ -385,21 +286,21 @@ async def radio_search(ctx, query):
         try:
             search_result = [playlist[search_id]['artist'], playlist[search_id]['title']]
 
-            embed = discord.Embed(title="검색 완료", color=color['normal'])
+            embed = discord.Embed(title="검색 완료", color=option['color']['normal'])
             embed.add_field(name=f"{search_id}번 트랙", value=f"{search_result[0]} - {search_result[1]}", inline=True)
             await ctx.send(embed=embed)
             return
         except IndexError:
-            embed = discord.Embed(title="어...", description="검색 결과 **정말** 없음", color=color['warn'])
+            embed = discord.Embed(title="어...", description="검색 결과 **정말** 없음", color=option['color']['warn'])
             await ctx.send(embed=embed)
             return
     except ValueError:
         result = 0
         if len(query) < 3:
-            embed = discord.Embed(title="검색 취소됨", description="너무 짧은 검색어", color=color['warn'])
+            embed = discord.Embed(title="검색 취소됨", description="너무 짧은 검색어", color=option['color']['warn'])
             await ctx.send(embed=embed)
             return
-        embed = discord.Embed(title="검색 완료", color=color['normal'])
+        embed = discord.Embed(title="검색 완료", color=option['color']['normal'])
         for temp_playlist in playlist:
             if query.upper() in str(temp_playlist['artist']).upper() or query.upper() in str(
                     temp_playlist['title']).upper():
@@ -412,7 +313,7 @@ async def radio_search(ctx, query):
             embed.set_footer(text=f"검색된 트랙) {result}개 발견됨")
             await ctx.send(embed=embed)
         else:
-            embed = discord.Embed(title="어...", description="검색 결과 **정말** 없음", color=color['warn'])
+            embed = discord.Embed(title="어...", description="검색 결과 **정말** 없음", color=option['color']['warn'])
             await ctx.send(embed=embed)
     return
 
@@ -444,61 +345,9 @@ async def leave_all(ctx):
     await ctx.send("켜저있는 다른 라디오를 모두 종료합니다.")
     key = list(radioWorker.keys())
     for temp_key in key:
-        await radioWorker[temp_key].get_ctx().send("`봇 관리자에 의하여 라디오가 종료되었습니다.`")
+        await radioWorker[temp_key].get_ctx().send("```봇 관리자에 의하여 라디오가 종료되었습니다.```")
         await radioWorker[temp_key].get_client().disconnect()
     return
-
-
-@bot.command(hidden=True)
-@commands.check(is_owner)
-async def change_set(ctx, option_name=None, option_value=None):
-    if option_name is None or option_value is None:
-        try:
-            embed = discord.Embed(title="잘못된 사용법", description=f"{prefix}change_set [<옵션 명>] [<값>]",
-                                  color=color['warn'])
-            await ctx.send(embed=embed)
-        except discord.errors.Forbidden:
-            await ctx.send(":warning: [링크 첨부] 권한이 부족합니다")
-            await ctx.send(f"> 잘못된 사용법\n```{prefix}change_set [<옵션 명>] [<값>]```")
-        return
-    option_able = list(json.load(open(option_file)).keys())
-    if option_name not in option_able:
-        try:
-            embed = discord.Embed(title="지원하지 않는 옵션", description=f"옵션 명\n```{option_able}```", color=color['warn'])
-            await ctx.send(embed=embed)
-        except discord.errors.Forbidden:
-            await ctx.send(":warning: [링크 첨부] 권한이 부족합니다")
-            await ctx.send(f"> 지원하지 않는 옵션\n```{option_able}```")
-        return
-
-    try:
-        embed = discord.Embed(title="변경 완료!", description=f"변경한 옵션```{option_name}```\n"
-                                                          f"변경 전 / 변경 후```{option[option_name]} / {option_value}```",
-                              color=color['normal'])
-        await ctx.send(embed=embed)
-    except discord.errors.Forbidden:
-        await ctx.send(":warning: [링크 첨부] 권한이 부족합니다")
-        await ctx.send(f"> 변경 완료!\n변경한 옵션```{option_name}```\n",
-                       f"변경 전 / 변경 후```{option[option_name]} / {option_value}```")
-    try:
-        if isinstance(option[option_name], int):
-            option[option_name] = int(option_value)
-        elif isinstance(option[option_name], bool):
-            option[option_name] = bool(option_value)
-        elif isinstance(option[option_name], dict):
-            option[option_name] = dict(option_value)
-        elif isinstance(option[option_name], str):
-            option[option_name] = str(option_value)
-        else:
-            raise ValueError
-    except ValueError:
-        await ctx.send("`옵션 값이 잘못되어 변경이 취소 됩니다`")
-        return
-
-    await ctx.send(":warning: 옵션이 변경되었습니다, 일부 옵션은 봇을 다시 시작해야 적용됩니다")
-    logger.warning("Option Changed, please restart bot")
-    with open(option_file, "w", encoding="utf8") as option_change:
-        option_change.write(json.dumps(option, indent=4))
 
 
 ##################################################################################
@@ -543,7 +392,7 @@ async def repeat(ctx):
 async def play(ctx, query=None):
     """다음에 재생할 노래를 지정합니다"""
     if query is None:
-        embed = discord.Embed(title="어..", description="무엇을 틀었어야 하는 걸까요?", color=color['info'])
+        embed = discord.Embed(title="어..", description="무엇을 틀었어야 하는 걸까요?", color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
@@ -555,7 +404,7 @@ async def play(ctx, query=None):
 async def search(ctx, query=None):
     """검색기능은 트랙번호 또는 작곡가 또는 제목으로 검색이 가능합니다"""
     if query is None:
-        embed = discord.Embed(title="어..", description="무엇을 찾았어야 하는 걸까요?", color=color['info'])
+        embed = discord.Embed(title="어..", description="무엇을 찾았어야 하는 걸까요?", color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
@@ -598,7 +447,7 @@ async def re(ctx):
 @commands.check(is_public)
 async def p(ctx, query=None):
     if query is None:
-        embed = discord.Embed(title="어..", description="무엇을 틀었어야 하는 걸까요?", color=color['info'])
+        embed = discord.Embed(title="어..", description="무엇을 틀었어야 하는 걸까요?", color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
@@ -609,7 +458,7 @@ async def p(ctx, query=None):
 @commands.check(is_public)
 async def sh(ctx, query=None):
     if query is None:
-        embed = discord.Embed(title="어..", description="무엇을 찾았어야 하는 걸까요?", color=color['info'])
+        embed = discord.Embed(title="어..", description="무엇을 찾았어야 하는 걸까요?", color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
@@ -664,18 +513,12 @@ async def on_ready():
 # BOT Start
 try:
     logger.info("RadioBOT Starting...")
-    bot.run(botToken)
+    bot.run(bot_token)
 except discord.errors.LoginFailure:
     logger.critical("**Invalid token loaded!!**")
-    try:
-        logger.info("Reset Token")
-        with open("token.json", "w", encoding="utf8") as f:
-            f.write(json.dumps({"token": "#"}, indent=4))
-        logger.info("OK! - Token is now the default value")
-    except Exception as e:
-        logger.critical(f"FAIL - {e}")
+    token_manager.reset_token()
 except Exception as e:
-    logger.critical("="*30)
+    logger.critical("=" * 30)
     logger.critical("<< Bot is dead >>")
     logger.critical(e)
-    logger.critical("="*30)
+    logger.critical("=" * 30)
