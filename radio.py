@@ -279,7 +279,7 @@ async def radio_play(ctx, query):
         return
 
     try:
-        t_next = language['msg']['next-play'].replace("#artist#", playlist[play_next]['artist'])
+        t_next = language['msg']['next-song'].replace("#artist#", playlist[play_next]['artist'])
         t_next = t_next.replace("#title#", playlist[play_next]['title'])
 
         radioWorker[ctx.guild.id].set_stat(1, play_next)

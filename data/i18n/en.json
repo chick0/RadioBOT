@@ -1,0 +1,68 @@
+{
+  "author": {
+    "name": [
+      "Translator"
+    ],
+    "edit-date": "2020-06-25"
+  },
+  "help-msg": {
+    "type-admin": "administrator-only command",
+    "type-player": "Generic User Commands",
+    "type-short": "Shortened User Commands",
+    "admin-close": "Turn off the bot",
+    "admin-leave-all": "Turn off all radio",
+    "join": "Turn on the radio! (You must enter the voice channel.)",
+    "exit": "Turn off the radio...",
+    "skip": "Skip the songs that are playing now",
+    "nowplay": "View information about the music playing now",
+    "repeat": "[Enable/disable] repeat mode",
+    "play": "Specify the song you want to play next",
+    "search": "Search function can be searched by track number, composer, or title",
+    "short-join": "a command like #prefix#join",
+    "short-exit": "a command like #prefix#exit",
+    "short-skip": "a command like #prefix#skip",
+    "short-nowplay": "a command like #prefix#nowplay",
+    "short-repeat": "a command like #prefix#repeat",
+    "short-play": "a command like #prefix#play",
+    "short-search": "a command like #prefix#search"
+  },
+  "msg": {
+    "search-result-footer": "Discovered Tracks) #number# Found",
+    "private-mode-enable": "Private mode is active.",
+    "perm-missing": ":warning: Bot does not have permission to use [Embed Links]",
+    "plz-join-voice": "Please try again after entering the voice channel",
+    "join-error": "Failed to enter voice channel",
+    "i-am-working": "The radio is already working....",
+    "radio-dead": "The radio is off...",
+    "private-activate": "Private mode is active.",
+    "save": "Please save electricity and traffic!",
+    "repeat-on": "Repeated replay mode is active!",
+    "plz-int": "Playback can only be specified in numbers.",
+    "not-in-list": "The track has not been identified.",
+    "no-search-result": "What should I have found?",
+    "find-fail": "What should I have found?",
+    "play-fail": "What should I have played?",
+    "track-info": "#artist# - #title#",
+    "too-short-query": "Too short a search term",
+    "track-no": "#number# track",
+    "search-result-zero": "Search Results **Really** None",
+    "set-mode-normal": "Repetitive mode has been activated!",
+    "set-mode-repeat": "Normal play mode has been activated!",
+    "next-song": "Next, the #artist#'s #title# will play",
+    "next-youtube": "Next, #title# will play",
+    "shutdown-bot": ":wave: Shutting down the bot...",
+    "shutdown-by-admin": "The radio has been shut down by the administrator.",
+    "turn-off-all": "Shut down all radios"
+  },
+  "title": {
+    "music": "Music",
+    "warning": "warning",
+    "error": "error",
+    "cant-use": "Disabled Function",
+    "nothing-to-say": "...",
+    "set-complete": "Setting Complete!",
+    "search-complete": "Search complete",
+    "search-cancel": "Search Cancelled",
+    "radio_now-play": ":headphones: - Now Playing"
+  }
+}
