@@ -4,10 +4,10 @@ import json
 import logging
 
 logger = logging.getLogger()
+option_file = "option.json"
 
 
 def get_option():
-    option_file = "option.json"
     logger.info(f"Loading Option from [{option_file}]")
     try:
         option = json.load(open(option_file))
@@ -40,3 +40,15 @@ def get_option():
             logger.info(f"FAIL - Fail to create option file -> {e}")
 
     return option
+
+
+def update_option(new_option):
+    logger.info(f"Updating Option...")
+    try:
+        with open(option_file, "w", encoding="utf-8") as option_f:
+            option_f.write(json.dumps(new_option))
+        logger.info("OK! - Option is Updated")
+        return True
+    except Exception as e:
+        logger.info(f"FAIL - {e}")
+        return False

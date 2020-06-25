@@ -7,7 +7,9 @@ import subprocess
 try:
     import eyed3
 except ModuleNotFoundError:
+    print("===< Installing Module >===")
     subprocess.run(['pip', 'install', 'eyeD3==0.9.5'])
+    print("===========================")
     import eyed3
 
 import data.lib.option as option_loader

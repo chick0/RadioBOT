@@ -11,7 +11,8 @@
     "type-short": "Shortened User Commands",
     "admin-close": "Turn off the bot",
     "admin-leave-all": "Turn off all radio",
-    "join": "Turn on the radio! (You must enter the voice channel.)",
+    "admin-reload-playlist": "Reload playlists (all radios are shut down)",
+    "join": "Turn on the radio! (You must enter the voice channel)",
     "exit": "Turn off the radio...",
     "skip": "Skip the songs that are playing now",
     "nowplay": "View information about the music playing now",
@@ -27,6 +28,7 @@
     "short-search": "a command like #prefix#search"
   },
   "msg": {
+    "complete-reload-playlist": "The playlist has been reloaded",
     "search-result-footer": "Discovered Tracks) #number# Found",
     "private-mode-enable": "Private mode is active.",
     "perm-missing": ":warning: Bot does not have permission to use [Embed Links]",
@@ -48,8 +50,7 @@
     "search-result-zero": "Search Results **Really** None",
     "set-mode-normal": "Repetitive mode has been activated!",
     "set-mode-repeat": "Normal play mode has been activated!",
-    "next-song": "Next, the #artist#'s #title# will play",
-    "next-youtube": "Next, #title# will play",
+    "next-song": "Next, the #artist#'s [#title#] will play",
     "shutdown-bot": ":wave: Shutting down the bot...",
     "shutdown-by-admin": "The radio has been shut down by the administrator.",
     "turn-off-all": "Shut down all radios"

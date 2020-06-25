@@ -9,8 +9,6 @@ logger = logging.getLogger()
 
 def get_token():
     logger.info("Loading Token...")
-    bot_token = "#"
-
     try:
         logger.info("OK! - File exists")
         bot_token = json.load(open("token.json"))['token']

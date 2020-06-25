@@ -11,7 +11,8 @@
     "type-short": "짧게 줄여진 사용자 명령어",
     "admin-close": "봇을 끕니다",
     "admin-leave-all": "작동중인 모든 라디오를 끕니다",
-    "join": "라디오의 전원을 킵니다! (음성채널에 입장해야 합니다.)",
+    "admin-reload-playlist": "재생목록을 다시 불러옵니다 (모든 라디오가 종료됨)",
+    "join": "라디오의 전원을 킵니다! (음성채널에 입장해야 합니다)",
     "exit": "라디오의 전원을 끕니다...",
     "skip": "지금 재생되고 있는 노래를 넘깁니다",
     "nowplay": "지금 재생되는 음악의 정보를 확인합니다",
@@ -27,6 +28,7 @@
     "short-search": "#prefix#search 과 같은 명령어"
   },
   "msg": {
+    "complete-reload-playlist": "재생목록을 다시 불러왔습니다",
     "search-result-footer": "검색된 트랙) #number#개 발견됨",
     "private-mode-enable": "보호모드가 활성화 되어있습니다",
     "perm-missing": ":warning: [링크 첨부] 권한이 부족합니다",
@@ -49,7 +51,6 @@
     "set-mode-normal": "반복재생 모드가 활성화 되었습니다!",
     "set-mode-repeat": "일반재생 모드가 활성화 되었습니다!",
     "next-song": "다음은 [#artist#]의 [#title#](이)가 재생됩니다",
-    "next-youtube": "다음은 #title#(이)가 재생됩니다",
     "shutdown-bot": ":wave: 봇을 종료합니다",
     "shutdown-by-admin": "봇 관리자에 의하여 라디오가 종료되었습니다",
     "turn-off-all": "켜저있는 다른 라디오를 모두 종료합니다"

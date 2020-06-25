@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import time
-import json
 import random
 import logging
 import asyncio
@@ -12,47 +10,30 @@ try:
     import discord
     from discord.ext import commands, tasks
 except ModuleNotFoundError:
+    print("===< Installing Module >===")
     subprocess.run(['pip', 'install', 'discord==1.0.1'])
     subprocess.run(['pip', 'install', 'discord.py==1.3.2'])
     subprocess.run(['pip', 'install', 'PyNaCl==1.3.0'])
+    print("===========================")
     import discord
     from discord.ext import commands, tasks
 
+import data.lib.log as log_manager
+import data.lib.guild as guild_manager
+import data.lib.token as token_manager
 import data.lib.option as option_manager
-import data.lib.token_manager as token_manager
-import data.lib.playlist_loader as playlist
-import data.lib.language_manager as language_manager
+import data.lib.playlist as playlist_manager
+import data.lib.language as language_manager
 
-##################################################################################
-# Logger Setting
-log_formatter = logging.Formatter(
-    "%(asctime)s [%(levelname)s]: %(message)s",
-    "%Y-%m-%d %H:%M:%S"
-)
+log_manager.create_logger()
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-boot_time = time.strftime("%Y-%m-%d %HH %MM", time.localtime(time.time()))
-try:
-    file_handler = logging.FileHandler(f"log/{boot_time}.log")
-    file_handler.setFormatter(log_formatter)
-    logger.addHandler(file_handler)
-except FileNotFoundError:
-    os.mkdir("log/")
-    file_handler = logging.FileHandler(f"log/{boot_time}.log")
-    file_handler.setFormatter(log_formatter)
-    logger.addHandler(file_handler)
-
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(log_formatter)
-logger.addHandler(console_handler)
-del boot_time
 ##################################################################################
 # Checking Essential directory
 try:
     logger.info("Checking Essential directory...")
     with open("./data/check_data_directory", "w", encoding="utf8") as test_f:
         test_f.write("OK! - Essential directory is alive")
+    os.remove("./data/check_data_directory")
     logger.info("OK! - Essential directory is alive")
 except FileNotFoundError:
     logger.info("FAIL - Directory not found")
@@ -61,8 +42,8 @@ except FileNotFoundError:
 # Setting
 option = option_manager.get_option()
 bot_token = token_manager.get_token()
-playlist = playlist.get_playlist()
 language = language_manager.get_data()
+playlist = playlist_manager.get_playlist()
 
 bot = commands.Bot(command_prefix=option['prefix'])
 radioWorker = dict()
@@ -320,13 +301,21 @@ async def radio_search(ctx, query):
             return
         embed = discord.Embed(title=language['title']['search-complete'], color=option['color']['normal'])
         for temp_playlist in playlist:
-            if query.upper() in str(temp_playlist['artist']).upper() or query.upper() in str(temp_playlist['title']).upper():
+            def check_it(q):
+                if q.upper() in str(temp_playlist['artist']).upper():
+                    return True
+                elif q.upper() in str(temp_playlist['title']).upper():
+                    return True
+                else:
+                    return False
+
+            if check_it(query):
                 result += 1
                 search_result = language['msg']['track-info'].replace("#artist#", temp_playlist['artist'])
                 search_result = search_result.replace("#title#", temp_playlist['title'])
 
-                embed.add_field(name=language['msg']['track-no'].replace("#number#", str(playlist.index(temp_playlist))),
-                                value=search_result, inline=False)
+                embed.add_field(name=language['msg']['track-no'].replace("#number#", str(playlist.index(temp_playlist)))
+                                , value=search_result, inline=False)
 
         if result > 0:
             embed.set_footer(text=language['msg']['search-result-footer'].replace("#number#", str(result)))
@@ -368,6 +357,16 @@ class RadioOwner(commands.Cog, name=f"Radio - {language['help-msg']['type-admin'
             await radioWorker[temp_key].get_ctx().send(f"```{language['msg']['shutdown-by-admin']}```")
             await radioWorker[temp_key].get_client().disconnect()
         return
+
+    @commands.command(help=language['help-msg']['admin-reload-playlist'])
+    @commands.check(is_owner)
+    async def reload_playlist(self, ctx):
+        if len(radioWorker) > 0:
+            await self.leave_all(ctx)
+
+        global playlist
+        playlist = playlist_manager.get_playlist()
+        await ctx.send(f"```{language['msg']['complete-reload-playlist']}```")
 
 
 ##################################################################################
@@ -514,15 +513,7 @@ async def on_ready():
     logger.info(f"invite bot: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}"
                 f"&permissions=52224&scope=bot")
     logger.info("-" * 50)
-    logger.info(f"Connected to {len(bot.guilds)} servers")
-    result = list()
-    for temp_guild in bot.guilds:
-        logger.info(f" - Name: {temp_guild.name}")
-        result.append({'id': temp_guild.id, 'name': temp_guild.name})
-    logger.info("-" * 50)
-    if option['save_guild_data'] is True:
-        with open("./data/guild.json", "w", encoding="utf8") as guild_f:
-            guild_f.write(json.dumps(result, sort_keys=True, indent=4))
+    guild_manager.dump_guild(bot, option['save_guild_data'])
 
 
 ##################################################################################
