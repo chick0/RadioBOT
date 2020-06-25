@@ -38,6 +38,8 @@ discord.py를 사용해서 만든 디스코드 라디오 봇
  -  봇을 끕니다
 ;leave_all
  -  작동중인 모든 라디오를 끕니다
+ ;reload_playlist
+ -  재생목록을 다시 불러옵니다 (모든 라디오가 종료됨)
 </pre>
 
 ## 설정 파일
@@ -57,8 +59,12 @@ owner_id: (int),
     "warn": (int)
 }
 
+&#91;언어 파일 이름 (기본값: ko)
+- 언어파일 저장 위치: ./data/i18n/&#91;&lt;언어명&gt;&#93;.json
+lang": "&#91;&lt;언어명&gt;&#93;"
+
 &#91;접두사 (기본값: ;)&#93;
-prefix: ";"
+prefix: "&#91;&lt;접두사&gt;&#93;"
 
 &#91;보호모드 활성화 여부 (기본값: false)&#93;
 private_mode: (true/false)
