@@ -21,8 +21,8 @@ except ModuleNotFoundError:
 import data.lib.option as option_manager
 import data.lib.token_manager as token_manager
 import data.lib.playlist_loader as playlist
-# import data.lib.yt_get_playlist as playlist_yt
-# import data.lib.yt_download as yt_download
+import data.lib.language_manager as language_manager
+
 ##################################################################################
 # Logger Setting
 log_formatter = logging.Formatter(
@@ -63,6 +63,7 @@ del boot_time
 option = option_manager.get_option()
 bot_token = token_manager.get_token()
 playlist = playlist.get_playlist()
+language = language_manager.get_data()
 
 bot = commands.Bot(command_prefix=option['prefix'])
 radioWorker = dict()
@@ -102,7 +103,7 @@ class Radio:
         if self.client.is_connected():
             if len(self.client.channel.members) == 1:
                 embed = discord.Embed(title=":deciduous_tree: :evergreen_tree: :deciduous_tree: :evergreen_tree:",
-                                      description="전기와 트래픽을 아껴주세요!", color=option['color']['info'])
+                                      description=language['msg']['save'], color=option['color']['info'])
                 asyncio.run_coroutine_threadsafe(self.ctx.send(embed=embed), bot.loop)
                 asyncio.run_coroutine_threadsafe(self.client.disconnect(), bot.loop)
             else:
@@ -143,17 +144,17 @@ class Radio:
         if option['private_mode']:
             return
         else:
+            now_play = language['msg']['track-info'].replace("#artist#", playlist[self.playNow]['artist'])
+            now_play = now_play.replace("#title#", playlist[self.playNow]['title'])
             try:
-                now_play = [playlist[self.playNow]['artist'], playlist[self.playNow]['title']]
-                embed = discord.Embed(title=":headphones: - Now Playing",
-                                      description=f"{now_play[0]} - {now_play[1]}",
+                embed = discord.Embed(title=language['title']['now-play'],
+                                      description=now_play,
                                       color=option['color']['normal'])
                 await ctx.send(embed=embed)
             except discord.errors.Forbidden:
-                await ctx.send(f"> :headphones: - Now Playing\n"
-                               f"```{playlist[self.playNow]['artist']} - {playlist[self.playNow]['title']}```")
+                await ctx.send(f"> {language['title']['now-play']}\n```{now_play}```")
                 if self.ctx == ctx:
-                    await self.ctx.send(":warning: [링크 첨부] 권한이 부족합니다")
+                    await self.ctx.send(language['msg']['perm-missing'])
                     logger.warning(f"Permission missing at {self.ctx.guild.id}")
             return
 
@@ -167,18 +168,21 @@ async def radio_join(ctx):
     except AttributeError as join_error_AttributeError:
         logger.error(f"Radio connection error at {ctx.guild.id} [{join_error_AttributeError}]")
 
-        embed = discord.Embed(title="...", description="음성 채널 입장후 다시 시도해 주세요.", color=option['color']['info'])
+        embed = discord.Embed(title=language['title']['nothing-to-say'],
+                              description=language['msg']['plz-join-voice'], color=option['color']['info'])
         await ctx.send(embed=embed)
         return
     except discord.errors.ClientException as join_error_ClientException:
         logger.error(f"Radio connection error at {ctx.guild.id} [{join_error_ClientException}]")
 
-        embed = discord.Embed(title="...", description="음성 채널에 입장에 실패하였습니다", color=option['color']['info'])
+        embed = discord.Embed(title=language['title']['nothing-to-say'],
+                              description=language['msg']['join-error'], color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
     if voice_client.is_playing():
-        embed = discord.Embed(title="저기요?", description="이미 라디오가 작동하고 있다는데..", color=option['color']['info'])
+        embed = discord.Embed(title=language['title']['nothing-to-say'],
+                              description=language['msg']['i-am-working'], color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
@@ -192,7 +196,8 @@ async def radio_exit(ctx):
         await ctx.send(":wave:")
     except KeyError:
         logger.error(f"No radioWorker at {ctx.guild.id}")
-        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=option['color']['info'])
+        embed = discord.Embed(title=language['title']['nothing-to-say'],
+                              description=language['msg']['radio-dead'], color=option['color']['info'])
         await ctx.send(embed=embed)
     return
 
@@ -201,13 +206,15 @@ async def radio_skip(ctx):
     try:
         stat = radioWorker[ctx.guild.id].get_stat()
         if stat[0] == 2:
-            embed = discord.Embed(title="사용불가", description="반복재생 모드가 활성화 되어있습니다!", color=option['color']['warn'])
+            embed = discord.Embed(title=language['title']['cant-use'],
+                                  description=language['msg']['private-mode-enable'], color=option['color']['warn'])
             await ctx.send(embed=embed)
         else:
             radioWorker[ctx.guild.id].get_client().stop()
     except KeyError:
         logger.error(f"No radioWorker at {ctx.guild.id}")
-        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=option['color']['info'])
+        embed = discord.Embed(title=language['title']['nothing-to-say'],
+                              description=language['msg']['radio-dead'], color=option['color']['info'])
         await ctx.send(embed=embed)
     return
 
@@ -216,17 +223,19 @@ async def radio_nowplay(ctx):
     if option['private_mode']:
         logger.warning("[private_mode] is working")
         try:
-            embed = discord.Embed(title="사용불가", description="보호모드가 활성화 되어있습니다", color=option['color']['warn'])
+            embed = discord.Embed(title=language['title']['cant-use'],
+                                  description=language['msg']['private-mode-enable'], color=option['color']['warn'])
             await ctx.send(embed=embed)
         except discord.errors.Forbidden:
-            await ctx.send("> 사용불가\n```보호모드가 활성화 되어있습니다```")
+            await ctx.send(f"> {language['title']['cant-use']}\n```{language['msg']['private-mode-enable']}```")
         return
 
     try:
         await radioWorker[ctx.guild.id].send_play(ctx)
     except KeyError:
         logger.error(f"No radioWorker at {ctx.guild.id}")
-        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=option['color']['info'])
+        embed = discord.Embed(title=language['title']['nothing-to-say'],
+                              description=language['msg']['radio-dead'], color=option['color']['info'])
         await ctx.channel.send(embed=embed)
     return
 
@@ -234,19 +243,21 @@ async def radio_nowplay(ctx):
 async def radio_repeat(ctx):
     try:
         stat = radioWorker[ctx.guild.id].get_stat()
-        mode = str()
+        mode_msg = str()
         if stat[0] == 2:
-            mode = "일반재생"
+            mode_msg = language['msg']['set-mode-normal']
             radioWorker[ctx.guild.id].set_stat(0, 0)
         elif stat[0] != 2:
-            mode = "반복"
+            mode_msg = language['msg']['set-mode-repeat']
             radioWorker[ctx.guild.id].set_stat(2, 0)
 
-        embed = discord.Embed(title="변경완료!", description=f"{mode} 모드가 활성화 되었습니다!", color=option['color']['normal'])
+        embed = discord.Embed(title=language['title']['set-complete'],
+                              description=mode_msg, color=option['color']['normal'])
         await ctx.send(embed=embed)
     except KeyError:
         logger.error(f"No Radio Worker at {ctx.guild.id}")
-        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=option['color']['info'])
+        embed = discord.Embed(title=language['title']['nothing-to-say'],
+                              description=language['msg']['radio-dead'], color=option['color']['info'])
         await ctx.send(embed=embed)
         return
     return
@@ -256,25 +267,29 @@ async def radio_play(ctx, query):
     try:
         play_next = int(query)
     except ValueError:
-        embed = discord.Embed(title="어..", description="재생 지정은 번호로만 지정이 가능해요", color=option['color']['info'])
+        embed = discord.Embed(title=language['title']['nothing-to-say'],
+                              description=language['msg']['plz-int'], color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
     if play_next < 0 or play_next > len(playlist) - 1:
-        embed = discord.Embed(title="어...", description="해당 트랙은 확인되지 않았습니다", color=option['color']['info'])
+        embed = discord.Embed(title=language['title']['nothing-to-say'],
+                              description=language['msg']['not-in-list'], color=option['color']['info'])
         await ctx.send(embed=embed)
         return
 
     try:
+        t_next = language['msg']['next-play'].replace("#artist#", playlist[play_next]['artist'])
+        t_next = t_next.replace("#title#", playlist[play_next]['title'])
+
         radioWorker[ctx.guild.id].set_stat(1, play_next)
-        embed = discord.Embed(title="설정 완료!",
-                              description=f"다음은 [{playlist[play_next]['artist']}]의 "
-                                          f"[{playlist[play_next]['title']}](이)가 재생됩니다",
-                              color=option['color']['normal'])
+        embed = discord.Embed(title=language['title']['set-complete'],
+                              description=t_next, color=option['color']['normal'])
         await ctx.send(embed=embed)
     except KeyError:
         logger.error(f"No Radio Worker at {ctx.guild.id}")
-        embed = discord.Embed(title="?", description="라디오가 꺼저있다는데..", color=option['color']['info'])
+        embed = discord.Embed(title=language['title']['nothing-to-say'],
+                              description=language['msg']['radio-lost'], color=option['color']['info'])
         await ctx.send(embed=embed)
         return
     return
@@ -284,36 +299,42 @@ async def radio_search(ctx, query):
     try:
         search_id = int(query)
         try:
-            search_result = [playlist[search_id]['artist'], playlist[search_id]['title']]
+            search_result = language['msg']['track-info'].replace("#artist#", playlist[search_id]['artist'])
+            search_result = search_result.replace("#title#", playlist[search_id]['title'])
 
-            embed = discord.Embed(title="검색 완료", color=option['color']['normal'])
-            embed.add_field(name=f"{search_id}번 트랙", value=f"{search_result[0]} - {search_result[1]}", inline=True)
+            embed = discord.Embed(title=language['title']['search-complete'], color=option['color']['normal'])
+            embed.add_field(name=language['msg']['track-no'].replace("#number#", str(search_id)),
+                            value=search_result, inline=True)
             await ctx.send(embed=embed)
             return
         except IndexError:
-            embed = discord.Embed(title="어...", description="검색 결과 **정말** 없음", color=option['color']['warn'])
+            embed = discord.Embed(title=language['title']['nothing-to-say'],
+                                  description=language['msg']['search-result-zero'], color=option['color']['warn'])
             await ctx.send(embed=embed)
             return
     except ValueError:
         result = 0
         if len(query) < 3:
-            embed = discord.Embed(title="검색 취소됨", description="너무 짧은 검색어", color=option['color']['warn'])
+            embed = discord.Embed(title=language['title']['search-cancel'],
+                                  description=language['msg']['too-short-query'], color=option['color']['warn'])
             await ctx.send(embed=embed)
             return
-        embed = discord.Embed(title="검색 완료", color=option['color']['normal'])
+        embed = discord.Embed(title=language['title']['search-complete'], color=option['color']['normal'])
         for temp_playlist in playlist:
-            if query.upper() in str(temp_playlist['artist']).upper() or query.upper() in str(
-                    temp_playlist['title']).upper():
+            if query.upper() in str(temp_playlist['artist']).upper() or query.upper() in str(temp_playlist['title']).upper():
                 result += 1
-                embed.add_field(name=f"{playlist.index(temp_playlist)}번 트랙",
-                                value=f"{temp_playlist['artist']} - {temp_playlist['title']}",
-                                inline=False)
+                search_result = language['msg']['track-info'].replace("#artist#", temp_playlist['artist'])
+                search_result = search_result.replace("#title#", temp_playlist['title'])
+
+                embed.add_field(name=language['msg']['track-no'].replace("#number#", str(playlist.index(temp_playlist))),
+                                value=search_result, inline=False)
 
         if result > 0:
-            embed.set_footer(text=f"검색된 트랙) {result}개 발견됨")
+            embed.set_footer(text=language['msg']['search-result-footer'].replace("#number#", str(result)))
             await ctx.send(embed=embed)
         else:
-            embed = discord.Embed(title="어...", description="검색 결과 **정말** 없음", color=option['color']['warn'])
+            embed = discord.Embed(title=language['title']['nothing-to-say'],
+                                  description=language['msg']['search-result-zero'], color=option['color']['warn'])
             await ctx.send(embed=embed)
     return
 
@@ -330,139 +351,132 @@ def is_public(ctx):
 
 ##################################################################################
 # Radio Function - For owner
-@bot.command(hidden=True)
-@commands.check(is_owner)
-async def close(ctx):
-    await ctx.send(":wave: 봇을 종료합니다.")
-    if len(radioWorker) > 0:
-        await leave_all(ctx)
-    await bot.close()
+class RadioOwner(commands.Cog, name=f"Radio - {language['help-msg']['type-admin']}"):
+    @commands.command(help=language['help-msg']['admin-close'])
+    @commands.check(is_owner)
+    async def close(self, ctx):
+        await ctx.send(language['msg']['shutdown-bot'])
+        if len(radioWorker) > 0:
+            await self.leave_all(ctx)
+        await bot.close()
 
-
-@bot.command(hidden=True)
-@commands.check(is_owner)
-async def leave_all(ctx):
-    await ctx.send("켜저있는 다른 라디오를 모두 종료합니다.")
-    key = list(radioWorker.keys())
-    for temp_key in key:
-        await radioWorker[temp_key].get_ctx().send("```봇 관리자에 의하여 라디오가 종료되었습니다.```")
-        await radioWorker[temp_key].get_client().disconnect()
-    return
+    @commands.command(help=language['help-msg']['admin-leave-all'])
+    @commands.check(is_owner)
+    async def leave_all(self, ctx):
+        await ctx.send(language['msg']['turn-off-all'])
+        key = list(radioWorker.keys())
+        for temp_key in key:
+            await radioWorker[temp_key].get_ctx().send(f"```{language['msg']['shutdown-by-admin']}```")
+            await radioWorker[temp_key].get_client().disconnect()
+        return
 
 
 ##################################################################################
 # Radio Function - For @everyone
-@bot.command()
-@commands.check(is_public)
-async def join(ctx):
-    """라디오의 전원을 킵니다! (음성채널에 입장해야 합니다.)"""
-    await radio_join(ctx)
+class RadioPlayer(commands.Cog, name=f"Radio - {language['help-msg']['type-player']}"):
+    @commands.command(help=language['help-msg']['join'])
+    @commands.check(is_public)
+    async def join(self, ctx):
+        """#""".replace("#", language['help-msg']['join'])
+        await radio_join(ctx)
 
+    @commands.command(help=language['help-msg']['exit'])
+    @commands.check(is_public)
+    async def exit(self, ctx):
+        await radio_exit(ctx)
 
-@bot.command()
-@commands.check(is_public)
-async def exit(ctx):
-    """라디오의 전원을 끕니다..."""
-    await radio_exit(ctx)
+    @commands.command(help=language['help-msg']['skip'])
+    @commands.check(is_public)
+    async def skip(self, ctx):
+        await radio_skip(ctx)
 
+    @commands.command(help=language['help-msg']['nowplay'])
+    @commands.check(is_public)
+    async def nowplay(self, ctx):
+        await radio_nowplay(ctx)
 
-@bot.command()
-@commands.check(is_public)
-async def skip(ctx):
-    """지금 재생되고 있는 노래를 넘깁니다"""
-    await radio_skip(ctx)
+    @commands.command(help=language['help-msg']['repeat'])
+    @commands.check(is_public)
+    async def repeat(self, ctx):
+        await radio_repeat(ctx)
 
+    @commands.command(help=language['help-msg']['play'])
+    @commands.check(is_public)
+    async def play(self, ctx, query=None):
+        if query is None:
+            embed = discord.Embed(title=language['title']['nothing-to-say'],
+                                  description=language['msg']['play-fail'], color=option['color']['info'])
+            await ctx.send(embed=embed)
+            return
 
-@bot.command()
-@commands.check(is_public)
-async def nowplay(ctx):
-    """지금 재생되는 음악의 정보를 확인합니다"""
-    await radio_nowplay(ctx)
+        await radio_play(ctx, query)
 
+    @commands.command(help=language['help-msg']['search'])
+    @commands.check(is_public)
+    async def search(self, ctx, query=None):
+        if query is None:
+            embed = discord.Embed(title=language['title']['nothing-to-say'],
+                                  description=language['msg']['find-fail'], color=option['color']['info'])
+            await ctx.send(embed=embed)
+            return
 
-@bot.command()
-@commands.check(is_public)
-async def repeat(ctx):
-    """반복재생 모드를 [활성화/비활성화] 합니다"""
-    await radio_repeat(ctx)
-
-
-@bot.command()
-@commands.check(is_public)
-async def play(ctx, query=None):
-    """다음에 재생할 노래를 지정합니다"""
-    if query is None:
-        embed = discord.Embed(title="어..", description="무엇을 틀었어야 하는 걸까요?", color=option['color']['info'])
-        await ctx.send(embed=embed)
-        return
-
-    await radio_play(ctx, query)
-
-
-@bot.command()
-@commands.check(is_public)
-async def search(ctx, query=None):
-    """검색기능은 트랙번호 또는 작곡가 또는 제목으로 검색이 가능합니다"""
-    if query is None:
-        embed = discord.Embed(title="어..", description="무엇을 찾았어야 하는 걸까요?", color=option['color']['info'])
-        await ctx.send(embed=embed)
-        return
-
-    await radio_search(ctx, query)
+        await radio_search(ctx, query)
 
 
 ##################################################################################
 # Radio **Short** Function - For @everyone
-@bot.command(hidden=True)
-@commands.check(is_public)
-async def j(ctx):
-    await radio_join(ctx)
+class RadioShort(commands.Cog, name=f"Radio - {language['help-msg']['type-short']}"):
+    @commands.command(help=language['help-msg']['short-join'].replace("#prefix#", option['prefix']))
+    @commands.check(is_public)
+    async def j(self, ctx):
+        await radio_join(ctx)
+
+    @commands.command(help=language['help-msg']['short-exit'].replace("#prefix#", option['prefix']))
+    @commands.check(is_public)
+    async def e(self, ctx):
+        await radio_exit(ctx)
+
+    @commands.command(help=language['help-msg']['short-skip'].replace("#prefix#", option['prefix']))
+    @commands.check(is_public)
+    async def s(self, ctx):
+        await radio_skip(ctx)
+
+    @commands.command(help=language['help-msg']['short-nowplay'].replace("#prefix#", option['prefix']))
+    @commands.check(is_public)
+    async def np(self, ctx):
+        await radio_nowplay(ctx)
+
+    @commands.command(help=language['help-msg']['short-repeat'].replace("#prefix#", option['prefix']))
+    @commands.check(is_public)
+    async def re(self, ctx):
+        await radio_repeat(ctx)
+
+    @commands.command(help=language['help-msg']['short-play'].replace("#prefix#", option['prefix']))
+    @commands.check(is_public)
+    async def p(self, ctx, query=None):
+        if query is None:
+            embed = discord.Embed(title=language['title']['nothing-to-say'],
+                                  description=language['msg']['play-fail'], color=option['color']['info'])
+            await ctx.send(embed=embed)
+            return
+
+        await radio_play(ctx, query)
+
+    @commands.command(help=language['help-msg']['short-search'].replace("#prefix#", option['prefix']))
+    @commands.check(is_public)
+    async def sh(self, ctx, query=None):
+        if query is None:
+            embed = discord.Embed(title=language['title']['nothing-to-say'],
+                                  description=language['msg']['find-fail'], color=option['color']['info'])
+            await ctx.send(embed=embed)
+            return
+
+        await radio_search(ctx, query)
 
 
-@bot.command(hidden=True)
-@commands.check(is_public)
-async def e(ctx):
-    await radio_exit(ctx)
-
-
-@bot.command(hidden=True)
-@commands.check(is_public)
-async def s(ctx):
-    await radio_skip(ctx)
-
-
-@bot.command(hidden=True)
-@commands.check(is_public)
-async def np(ctx):
-    await radio_nowplay(ctx)
-
-
-@bot.command(hidden=True)
-@commands.check(is_public)
-async def re(ctx):
-    await radio_repeat(ctx)
-
-
-@bot.command(hidden=True)
-@commands.check(is_public)
-async def p(ctx, query=None):
-    if query is None:
-        embed = discord.Embed(title="어..", description="무엇을 틀었어야 하는 걸까요?", color=option['color']['info'])
-        await ctx.send(embed=embed)
-        return
-
-    await radio_play(ctx, query)
-
-
-@bot.command(hidden=True)
-@commands.check(is_public)
-async def sh(ctx, query=None):
-    if query is None:
-        embed = discord.Embed(title="어..", description="무엇을 찾았어야 하는 걸까요?", color=option['color']['info'])
-        await ctx.send(embed=embed)
-        return
-
-    await radio_search(ctx, query)
+bot.add_cog(RadioPlayer())
+bot.add_cog(RadioOwner())
+bot.add_cog(RadioShort())
 
 
 ##################################################################################
@@ -488,7 +502,8 @@ async def on_ready():
     if option['auto_owner']:
         option['owner_id'] = auto.owner.id
     await bot.change_presence(status=discord.Status.idle,
-                              activity=discord.Activity(type=discord.ActivityType.listening, name="Music"))
+                              activity=discord.Activity(type=discord.ActivityType.listening,
+                                                        name=language['title']['music']))
 
     logger.info("-" * 50)
     logger.info(f"BOT Login -> {bot.user}")
@@ -509,6 +524,8 @@ async def on_ready():
     if option['save_guild_data'] is True:
         with open("./data/guild.json", "w", encoding="utf8") as guild_f:
             guild_f.write(json.dumps(result, sort_keys=True, indent=4))
+
+
 ##################################################################################
 # BOT Start
 try:

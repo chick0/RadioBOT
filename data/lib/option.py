@@ -24,6 +24,7 @@ def get_option():
                 "normal": 16579836,
                 "warn": 13450043
             },
+            "lang": "ko",
             "prefix": ";",
             "private_mode": False,
             "save_guild_data": False,
