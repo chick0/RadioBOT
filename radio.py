@@ -23,6 +23,7 @@ try:
     import data.lib.guild as guild_manager
     import data.lib.token as token_manager
     import data.lib.option as option_manager
+    import data.lib.start_page as start_page
     import data.lib.playlist as playlist_manager
     import data.lib.language as language_manager
 except ModuleNotFoundError:
@@ -517,23 +518,14 @@ async def on_ready():
 
     if option['auto_owner']:
         option['owner_id'] = auto.owner.id
-    await bot.change_presence(status=discord.Status.idle,
-                              activity=discord.Activity(
-                                  type=discord.ActivityType.listening,
-                                  name=language['title']['music']
-                              )
-                              )
+    else:
+        if option['owner_id'] != auto.owner.id:
+            logger.warning("BOT Owner is not the same as Auto Detect mode")
+            logger.warning(f"Auto Detect Owner -> {auto.owner.id} / {auto.owner}")
 
-    logger.info("-" * 50)
-    logger.info(f"BOT Login -> {bot.user}")
-    logger.info(f"BOT Owner -> {option['owner_id']}")
-    if option['owner_id'] != auto.owner.id:
-        logger.warning("BOT Owner is not the same as Auto Detect mode")
-        logger.warning(f"Auto Detect Owner -> {auto.owner.id} / {auto.owner}")
-    logger.info("-" * 50)
-    logger.info(f"invite bot: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}"
-                f"&permissions=52224&scope=bot")
-    logger.info("-" * 50)
+    start_page.invite_me(bot, auto.owner)
+    await start_page.set_status(bot, language, "idle")
+
     guild_manager.dump_guild(bot, option['save_guild_data'])
 
 
