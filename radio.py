@@ -8,7 +8,7 @@ import subprocess
 
 try:
     import discord
-    from discord.ext import commands, tasks
+    from discord.ext import commands
 except ModuleNotFoundError:
     print("===< Installing Module >===")
     subprocess.run(['pip', 'install', 'discord==1.0.1'])
@@ -16,7 +16,7 @@ except ModuleNotFoundError:
     subprocess.run(['pip', 'install', 'PyNaCl==1.3.0'])
     print("===========================")
     import discord
-    from discord.ext import commands, tasks
+    from discord.ext import commands
 
 try:
     import data.lib.log as log_manager
@@ -345,7 +345,13 @@ async def radio_search(ctx, query):
 ##################################################################################
 # Radio Function - Permission check
 def is_owner(ctx):
-    return ctx.author.id == option['owner_id']
+    if isinstance(option['owner_id'], list):
+        for item in option['owner_id']:
+            if item.id == ctx.author.id:
+                return True
+        return False
+    else:
+        return ctx.author.id == option['owner_id']
 
 
 def is_public(ctx):
@@ -510,20 +516,24 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_ready():
-    auto = await bot.application_info()
-    if auto.bot_public and option['private_mode']:
+    app = await bot.application_info()
+    if app.bot_public and option['private_mode']:
         logger.warning("This BOT is Public bot!")
         logger.warning("Private mode is now OFF")
         option['private_mode'] = False
 
     if option['auto_owner']:
-        option['owner_id'] = auto.owner.id
+        option['owner_id'] = app.owner.id
+        if app.team is not None:
+            logger.info("-" * 50)
+            logger.warning("<< This BOT is team application >>")
+            option['owner_id'] = app.team.members
     else:
-        if option['owner_id'] != auto.owner.id:
+        if option['owner_id'] != app.owner.id:
             logger.warning("BOT Owner is not the same as Auto Detect mode")
-            logger.warning(f"Auto Detect Owner -> {auto.owner.id} / {auto.owner}")
+            logger.warning(f"Auto Detect Owner -> {app.owner.id} / {app.owner}")
 
-    start_page.invite_me(bot, auto.owner)
+    start_page.invite_me(bot, app.owner)
     await start_page.set_status(bot, language, "idle")
 
     guild_manager.dump_guild(bot, option['save_guild_data'])

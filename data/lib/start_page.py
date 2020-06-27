@@ -20,8 +20,8 @@ def __get_status(option):
         return discord.Status.online
 
 
-async def set_status(bot, language, option):
-    await bot.change_presence(status=__get_status(option),
+async def set_status(bot, language, status):
+    await bot.change_presence(status=__get_status(status),
                               activity=discord.Activity(type=discord.ActivityType.listening,
                                                         name=language['title']['music'])
                               )
