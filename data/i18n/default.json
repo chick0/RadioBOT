@@ -12,17 +12,18 @@
     "admin-close": "봇을 끕니다",
     "admin-leave-all": "작동중인 모든 라디오를 끕니다",
     "admin-reload-playlist": "재생목록을 다시 불러옵니다 (모든 라디오가 종료됨)",
+    "upload": "음악을 업로드 합니다!",
     "join": "라디오의 전원을 킵니다! (음성채널에 입장해야 합니다)",
     "exit": "라디오의 전원을 끕니다...",
     "skip": "지금 재생되고 있는 노래를 넘깁니다",
-    "nowplay": "지금 재생되는 음악의 정보를 확인합니다",
+    "now-play": "지금 재생되는 음악의 정보를 확인합니다",
     "repeat": "반복재생 모드를 [활성화/비활성화] 합니다",
     "play": "다음에 재생할 노래를 지정합니다",
     "search": "검색기능은 트랙번호 또는 작곡가 또는 제목으로 검색이 가능합니다",
     "short-join": "#prefix#join 과 같은 명령어",
     "short-exit": "#prefix#exit 과 같은 명령어",
     "short-skip": "#prefix#skip 과 같은 명령어",
-    "short-nowplay": "#prefix#nowplay 과 같은 명령어",
+    "short-now-play": "#prefix#nowplay 과 같은 명령어",
     "short-repeat": "#prefix#repeat 과 같은 명령어",
     "short-play": "#prefix#play 과 같은 명령어",
     "short-search": "#prefix#search 과 같은 명령어"
@@ -48,6 +49,9 @@
     "too-short-query": "너무 짧은 검색어",
     "track-no": "#number# 번 트랙",
     "search-result-zero": "검색 결과 **정말** 없음",
+    "upload-cancel-no-upload": "사유: 업로드된 파일이 없음",
+    "upload-cancel-directory": "사유: 파일 업로드 폴더를 만들 수 없음",
+    "upload-cancel-fail": "사유: 인식 할 수 있는 음악 파일이 아님",
     "set-mode-normal": "반복재생 모드가 활성화 되었습니다!",
     "set-mode-repeat": "일반재생 모드가 활성화 되었습니다!",
     "next-song": "다음은 [#artist#]의 [#title#](이)가 재생됩니다",
@@ -64,6 +68,10 @@
     "set-complete": "설정 완료!",
     "search-complete": "검색 완료",
     "search-cancel": "검색 취소됨",
-    "now-play": ":headphones: - Now Playing"
+    "upload-complete": "업로드가 완료되었습니다!",
+    "upload-cancel": "업로드가 취소되었습니다...",
+    "upload-result-info": "업로드된 음악의 정보",
+    "upload-result-name": "파일명",
+    "now-play": ":headphones: Now Playing"
   }
 }

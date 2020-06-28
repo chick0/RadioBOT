@@ -20,18 +20,31 @@ def __get_status(option):
         return discord.Status.online
 
 
-async def set_status(bot, language, status):
+def __get_type(option):
+    if option == "playing":
+        return discord.ActivityType.playing
+    elif option == "streaming":
+        return discord.ActivityType.streaming
+    elif option == "listening":
+        return discord.ActivityType.listening
+    elif option == "watching":
+        return discord.ActivityType.watching
+    else:
+        return discord.ActivityType.unknown
+
+
+async def set_status(bot, status, activity, name):
     await bot.change_presence(status=__get_status(status),
-                              activity=discord.Activity(type=discord.ActivityType.listening,
-                                                        name=language['title']['music'])
+                              activity=discord.Activity(type=__get_type(activity),
+                                                        name=name)
                               )
 
 
-def invite_me(bot, owner):
+def invite_me(bot, owner, permission):
     logger.info("-" * 50)
     logger.info(f"BOT Login -> {bot.user}")
     logger.info(f"BOT Owner -> {owner}")
     logger.info("-" * 50)
     logger.info(f"invite bot: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}"
-                f"&permissions=52224&scope=bot")
+                f"&permissions={permission}&scope=bot")
     logger.info("-" * 50)
