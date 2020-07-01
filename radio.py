@@ -452,7 +452,6 @@ class RadioPlayer(commands.Cog, name=f"Radio - {language['help-msg']['type-playe
     @commands.command(help=language['help-msg']['join'])
     @commands.check(is_public)
     async def join(self, ctx):
-        """#""".replace("#", language['help-msg']['join'])
         await radio_join(ctx)
 
     @commands.command(help=language['help-msg']['exit'])
@@ -562,12 +561,18 @@ bot.add_cog(RadioShort())
 # BOT Event
 @bot.event
 async def on_command(ctx):
-    logger.info(f"[{ctx.author.id}]{ctx.author} use [{ctx.message.content}] command at [{ctx.guild.id}]")
+    try:
+        logger.info(f"[{ctx.author.id}]{ctx.author} use [{ctx.message.content}] command at [{ctx.guild.id}]")
+    except AttributeError:
+        logger.critical("Logging fail")
 
 
 @bot.event
 async def on_command_error(ctx, error):
-    logger.error(f"[{ctx.author.id}]{ctx.author} meet the [{error}] at [{ctx.guild.id}]")
+    try:
+        logger.error(f"[{ctx.author.id}]{ctx.author} meet the [{error}] at [{ctx.guild.id}]")
+    except AttributeError:
+        logger.critical("Logging fail")
 
 
 @bot.event
