@@ -11,6 +11,7 @@ import subprocess
 try:
     import discord
     from discord.ext import commands
+    from discord.ext.commands.cooldowns import BucketType
 except ModuleNotFoundError:
     print("===< Installing Module >===")
     subprocess.run(['pip', 'install', 'discord==1.0.1'])
@@ -19,6 +20,7 @@ except ModuleNotFoundError:
     print("===========================")
     import discord
     from discord.ext import commands
+    from discord.ext.commands.cooldowns import BucketType
 
 try:
     import data.lib.music as music
@@ -348,16 +350,6 @@ async def radio_search(ctx, query):
 
 ##################################################################################
 # Radio Function - Permission check
-def is_owner(ctx):
-    if isinstance(option['owner_id'], list):
-        for item in option['owner_id']:
-            if item.id == ctx.author.id:
-                return True
-        return False
-    else:
-        return ctx.author.id == option['owner_id']
-
-
 def is_public(ctx):
     return not isinstance(ctx.message.channel, discord.abc.PrivateChannel)
 
@@ -366,84 +358,96 @@ def is_public(ctx):
 # Radio Function - For owner
 class RadioOwner(commands.Cog, name=f"Radio - {language['help-msg']['type-admin']}"):
     @commands.command(help=language['help-msg']['admin-close'])
-    @commands.check(is_owner)
+    @commands.check(is_public)
     async def close(self, ctx):
-        await ctx.send(language['msg']['shutdown-bot'])
-        if len(radioWorker) > 0:
-            await self.leave_all(ctx)
-        await bot.close()
+        if await ctx.bot.is_owner(user=ctx.author):
+            await ctx.send(language['msg']['shutdown-bot'])
+            if len(radioWorker) > 0:
+                await self.leave_all(ctx)
+            await ctx.bot.close()
+        else:
+            logger.warning(f"[{ctx.author.id}]{ctx.author} try to use owner command")
 
     @commands.command(help=language['help-msg']['admin-leave-all'])
-    @commands.check(is_owner)
+    @commands.check(is_public)
     async def leave_all(self, ctx):
-        await ctx.send(language['msg']['turn-off-all'])
-        key = list(radioWorker.keys())
-        for temp_key in key:
-            await radioWorker[temp_key].get_ctx().send(f"```{language['msg']['shutdown-by-admin']}```")
-            await radioWorker[temp_key].get_client().disconnect()
-        return
+        if await ctx.bot.is_owner(user=ctx.author):
+            await ctx.send(language['msg']['turn-off-all'])
+            key = list(radioWorker.keys())
+            for temp_key in key:
+                await radioWorker[temp_key].get_ctx().send(f"```{language['msg']['shutdown-by-admin']}```")
+                await radioWorker[temp_key].get_client().disconnect()
+        else:
+            logger.warning(f"[{ctx.author.id}]{ctx.author} try to use owner command")
 
     @commands.command(help=language['help-msg']['admin-reload-playlist'])
-    @commands.check(is_owner)
+    @commands.check(is_public)
     async def reload_playlist(self, ctx):
-        if len(radioWorker) > 0:
-            await self.leave_all(ctx)
+        if await ctx.bot.is_owner(user=ctx.author):
+            if len(radioWorker) > 0:
+                await self.leave_all(ctx)
 
-        global playlist
-        playlist = playlist_manager.get_playlist()
-        await ctx.send(f"```{language['msg']['complete-reload-playlist']}```")
+            global playlist
+            playlist = playlist_manager.get_playlist()
+            await ctx.send(f"```{language['msg']['complete-reload-playlist']}```")
+        else:
+            logger.warning(f"[{ctx.author.id}]{ctx.author} try to use owner command")
 
     @commands.command(help=language['help-msg']['upload'])
-    @commands.check(is_owner)
+    @commands.cooldown(rate=1, per=10, type=BucketType.guild)
+    @commands.check(is_public)
     async def upload(self, ctx):
-        if len(ctx.message.attachments) == 0:
-            embed = discord.Embed(title=language['title']['upload-cancel'],
-                                  description=f"```{language['msg']['upload-cancel-no-upload']}```",
-                                  color=option['color']['info'])
-            await ctx.send(embed=embed)
-            return
-        
-        try:
-            logger.info("Testing User Upload Directory")
-            with open("./data/user_upload/test", "w") as upload_directory_test:
-                upload_directory_test.write("Hello, World")
-                logger.info("OK! - Upload Directory Alive")
-        except FileNotFoundError:
-            logger.info("FAIL - Try to create User Upload Directory")
-            try:
-                os.mkdir("./data/user_upload")
-                logger.info("OK! - Upload Directory is Online")
-            except PermissionError:
-                logger.info("FAIL - Cancel Upload event")
+        if await ctx.bot.is_owner(user=ctx.author):
+            if len(ctx.message.attachments) == 0:
                 embed = discord.Embed(title=language['title']['upload-cancel'],
-                                      description=f"```{language['msg']['upload-cancel-directory']}```",
-                                      color=option['color']['warn'])
+                                      description=f"```{language['msg']['upload-cancel-no-upload']}```",
+                                      color=option['color']['info'])
                 await ctx.send(embed=embed)
                 return
 
-        for item in ctx.message.attachments:
-            extension = item.filename.split(".")[-1]
-            hash_result = hashlib.sha1(item.filename.encode()).hexdigest()
+            try:
+                logger.info("Testing User Upload Directory")
+                with open("./data/user_upload/test", "w") as upload_directory_test:
+                    upload_directory_test.write("Hello, World")
+                    logger.info("OK! - Upload Directory Alive")
+            except FileNotFoundError:
+                logger.info("FAIL - Try to create User Upload Directory")
+                try:
+                    os.mkdir("./data/user_upload")
+                    logger.info("OK! - Upload Directory is Online")
+                except PermissionError:
+                    logger.info("FAIL - Cancel Upload event")
+                    embed = discord.Embed(title=language['title']['upload-cancel'],
+                                          description=f"```{language['msg']['upload-cancel-directory']}```",
+                                          color=option['color']['warn'])
+                    await ctx.send(embed=embed)
+                    return
 
-            file_name = f"{ctx.author.id}_{hash_result}.{extension}"
-            await item.save(fp=os.fspath(f"./data/user_upload/{file_name}"))
+            for item in ctx.message.attachments:
+                extension = item.filename.split(".")[-1]
+                hash_result = hashlib.sha1(item.filename.encode()).hexdigest()
 
-            data = music.get_data(f"./data/user_upload/{file_name}")
-            if data is not None:
-                embed = discord.Embed(title=language['title']['upload-complete'],
-                                      color=option['color']['normal'])
-                embed.add_field(name=language['title']['upload-result-info'],
-                                value=f"{data['artist']} - {data['title']}", inline=False)
-                embed.add_field(name=language['title']['upload-result-name'],
-                                value=f"{file_name}", inline=False)
-                await ctx.send(embed=embed)
-                playlist.append(data)
-            else:
-                embed = discord.Embed(title=language['title']['upload-cancel'],
-                                      description=f"```{language['msg']['upload-cancel-fail']}```",
-                                      color=option['color']['info'])
-                await ctx.send(embed=embed)
-                os.remove(f"./data/user_upload/{file_name}")
+                file_name = f"{ctx.author.id}_{hash_result}.{extension}"
+                await item.save(fp=os.fspath(f"./data/user_upload/{file_name}"))
+
+                data = music.get_data(f"./data/user_upload/{file_name}")
+                if data is not None:
+                    embed = discord.Embed(title=language['title']['upload-complete'],
+                                          color=option['color']['normal'])
+                    embed.add_field(name=language['title']['upload-result-info'],
+                                    value=f"{data['artist']} - {data['title']}", inline=False)
+                    embed.add_field(name=language['title']['upload-result-name'],
+                                    value=f"{file_name}", inline=False)
+                    await ctx.send(embed=embed)
+                    playlist.append(data)
+                else:
+                    embed = discord.Embed(title=language['title']['upload-cancel'],
+                                          description=f"```{language['msg']['upload-cancel-fail']}```",
+                                          color=option['color']['info'])
+                    await ctx.send(embed=embed)
+                    os.remove(f"./data/user_upload/{file_name}")
+        else:
+            logger.warning(f"[{ctx.author.id}]{ctx.author} try to use owner command")
 
 
 ##################################################################################
@@ -569,6 +573,11 @@ async def on_command(ctx):
 
 @bot.event
 async def on_command_error(ctx, error):
+    if isinstance(error, discord.ext.commands.errors.CommandOnCooldown):
+        # I need help in here
+        await ctx.send(error)
+        return
+
     try:
         logger.error(f"[{ctx.author.id}]{ctx.author} meet the [{error}] at [{ctx.guild.id}]")
     except AttributeError:
@@ -577,27 +586,10 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_ready():
-    app = await bot.application_info()
-    if app.bot_public and option['private_mode']:
-        logger.warning("This BOT is Public bot!")
-        logger.warning("Private mode is now OFF")
-        option['private_mode'] = False
-
-    if option['auto_owner']:
-        option['owner_id'] = app.owner.id
-        if app.team is not None:
-            logger.info("-" * 50)
-            logger.warning("<< This BOT is team application >>")
-            option['owner_id'] = app.team.members
-    else:
-        if option['owner_id'] != app.owner.id:
-            logger.warning("BOT Owner is not the same as Auto Detect mode")
-            logger.warning(f"Auto Detect Owner -> {app.owner.id} / {app.owner}")
-
     await start_page.set_status(bot, "idle", "listening", language['title']['music'])
 
-    start_page.invite_me(bot, app.owner, 52224)
-    guild_manager.dump_guild(bot, option['save_guild_data'])
+    start_page.invite_me(bot=bot, permission=52224)
+    guild_manager.dump_guild(bot=bot, save=option['save_guild_data'])
 
 
 ##################################################################################

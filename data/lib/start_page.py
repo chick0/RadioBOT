@@ -40,10 +40,9 @@ async def set_status(bot, status, activity, name):
                               )
 
 
-def invite_me(bot, owner, permission):
+def invite_me(bot, permission):
     logger.info("-" * 50)
     logger.info(f"BOT Login -> {bot.user}")
-    logger.info(f"BOT Owner -> {owner}")
     logger.info("-" * 50)
     logger.info(f"invite bot: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}"
                 f"&permissions={permission}&scope=bot")
