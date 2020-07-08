@@ -31,7 +31,7 @@ def get_playlist():
 
         music_files = os.listdir("./data/user_upload/")
         for music_file in music_files:
-            data = music.get_data(f"./data/user_upload/{music_file}")
+            data = music.get_data(f"./data/user_upload/{music_file}", user_upload=True)
             if data is not None:
                 playlist.append(data)
     except FileNotFoundError:

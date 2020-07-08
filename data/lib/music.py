@@ -15,7 +15,7 @@ except ModuleNotFoundError:
 logger = logging.getLogger()
 
 
-def get_data(item):
+def get_data(item, user_upload=False):
     try:
         media = eyed3.load(item)
         artist = media.tag.artist
@@ -27,6 +27,6 @@ def get_data(item):
         if title is None:
             logger.warning(f"Missing Title in [{item}]")
             title = "None"
-        return {'artist': artist, 'title': title, 'name': item}
+        return {'artist': artist, 'title': title, 'name': item, 'user_upload': user_upload}
     except AttributeError:
         logger.warning(f"Fail to get data from [{item}]")

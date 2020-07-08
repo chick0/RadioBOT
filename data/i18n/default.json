@@ -54,6 +54,7 @@
     "upload-cancel-fail": "사유: 인식 할 수 있는 음악 파일이 아님",
     "set-mode-normal": "반복재생 모드가 활성화 되었습니다!",
     "set-mode-repeat": "일반재생 모드가 활성화 되었습니다!",
+    "warn-user-upload": ":warning: 해당 음악은 다른 사용자가 업로드한 음악입니다.",
     "next-song": "다음은 [#artist#]의 [#title#](이)가 재생됩니다",
     "shutdown-bot": ":wave: 봇을 종료합니다",
     "shutdown-by-admin": "봇 관리자에 의하여 라디오가 종료되었습니다",

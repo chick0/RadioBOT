@@ -129,13 +129,16 @@ class Radio:
         else:
             now_play = language['msg']['track-info'].replace("#artist#", playlist[self.playNow]['artist'])
             now_play = now_play.replace("#title#", playlist[self.playNow]['title'])
+            warn = ""
+            if playlist[self.playNow]['user_upload'] is True:
+                warn = language['msg']['warn-user-upload']
             try:
                 embed = discord.Embed(title=language['title']['now-play'],
-                                      description=f"```{now_play}```",
+                                      description=f"```{now_play}```\n{warn}",
                                       color=option['color']['normal'])
                 await ctx.send(embed=embed)
             except discord.errors.Forbidden:
-                await ctx.send(f"> {language['title']['now-play']}\n```{now_play}```")
+                await ctx.send(f"> {language['title']['now-play']}\n```{now_play}```\n{warn}")
                 if self.ctx == ctx:
                     await self.ctx.send(language['msg']['perm-missing'])
                     logger.warning(f"Permission missing at {self.ctx.guild.id}")

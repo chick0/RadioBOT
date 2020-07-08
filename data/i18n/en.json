@@ -54,6 +54,7 @@
     "upload-cancel-fail": "Reason: Not a recognizable music file",
     "set-mode-normal": "Repetitive mode has been activated!",
     "set-mode-repeat": "Normal play mode has been activated!",
+    "warn-user-upload": ":warning: The music was uploaded by another user.",
     "next-song": "Next, the [#artist#]'s [#title#] will play",
     "shutdown-bot": ":wave: Shutting down the bot...",
     "shutdown-by-admin": "The radio has been shut down by the administrator.",
