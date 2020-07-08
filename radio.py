@@ -336,7 +336,7 @@ async def radio_search(ctx, query):
 
                 embed.add_field(
                     name=language['msg']['track-no'].replace("#number#", str(playlist.index(temp_playlist))),
-                    value=search_result,
+                    value=f"```{search_result}```",
                     inline=False
                 )
 
