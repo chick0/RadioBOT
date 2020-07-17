@@ -3,21 +3,20 @@
 import os
 import logging
 
+import option
 import data.lib.music as music
-import data.lib.option as option_manager
 
 logger = logging.getLogger()
 
 
 def get_playlist():
     playlist = list()
-    option = option_manager.get_option()
 
     logger.info(f"Loading music from Music Directory...")
     try:
-        music_files = os.listdir(option['music_dir'])
+        music_files = os.listdir(option.music_dir)
         for music_file in music_files:
-            data = music.get_data(option['music_dir'] + music_file)
+            data = music.get_data(option.music_dir + music_file)
             if data is not None:
                 playlist.append(data)
     except Exception as e:

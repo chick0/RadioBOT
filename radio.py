@@ -14,40 +14,49 @@ try:
     from discord.ext.commands.cooldowns import BucketType
 except ModuleNotFoundError:
     print("===< Installing Module >===")
-    subprocess.run(['pip', 'install', 'discord==1.0.1'])
-    subprocess.run(['pip', 'install', 'discord.py==1.3.2'])
-    subprocess.run(['pip', 'install', 'PyNaCl==1.3.0'])
+    try:
+        subprocess.run(['pip', 'install', 'discord'])
+        subprocess.run(['pip', 'install', 'discord.py'])
+        subprocess.run(['pip', 'install', 'PyNaCl'])
+    except OSError:
+        subprocess.run(['pip3', 'install', 'discord'])
+        subprocess.run(['pip3', 'install', 'discord.py'])
+        subprocess.run(['pip3', 'install', 'PyNaCl'])
     print("===========================")
+
     import discord
     from discord.ext import commands
     from discord.ext.commands.cooldowns import BucketType
 
 try:
-    import data.lib.music as music
-
-    import data.lib.log as log_manager
-    import data.lib.guild as guild_manager
-    import data.lib.token as token_manager
-    import data.lib.option as option_manager
-    import data.lib.start_page as start_page
-    import data.lib.playlist as playlist_manager
-    import data.lib.language as language_manager
+    import data.lib.guild as g
+    import data.lib.language as lg
+    import data.lib.log as log
+    import data.lib.music as m
+    import data.lib.playlist as p
+    import data.lib.start_page as sp
+    import data.lib.token as t
 except ModuleNotFoundError:
     print("Required module not detected")
     print("Please download it again.")
     sys.exit(-1)
 
+try:
+    import option
+except ModuleNotFoundError:
+    print("Option File is Missing!")
+    sys.exit(-2)
+
 ##################################################################################
 # Setting
-log_manager.create_logger()
+log.create_logger()
 logger = logging.getLogger()
 
-option = option_manager.get_option()
-language = language_manager.get_data()
-playlist = playlist_manager.get_playlist()
+language = lg.get_data()
+playlist = p.get_playlist()
 
-bot_token = token_manager.get_token()
-bot = commands.Bot(command_prefix=option['prefix'])
+bot_token = t.get_token()
+bot = commands.Bot(command_prefix=option.prefix)
 radioWorker = dict()
 
 
@@ -86,7 +95,7 @@ class Radio:
         if self.client.is_connected():
             if len(self.client.channel.members) == 1:
                 embed = discord.Embed(title=":deciduous_tree: :evergreen_tree: :deciduous_tree: :evergreen_tree:",
-                                      description=f"```{language['msg']['save']}```", color=option['color']['info'])
+                                      description=f"```{language['msg']['save']}```", color=option.color.info)
                 asyncio.run_coroutine_threadsafe(self.ctx.send(embed=embed), bot.loop)
                 asyncio.run_coroutine_threadsafe(self.client.disconnect(), bot.loop)
             else:
@@ -124,7 +133,7 @@ class Radio:
         self.client.play(player, after=self.play_next)
 
     async def send_play(self, ctx):
-        if option['private_mode']:
+        if option.private_mode:
             return
         else:
             now_play = language['msg']['track-info'].replace("#artist#", playlist[self.playNow]['artist'])
@@ -135,7 +144,7 @@ class Radio:
             try:
                 embed = discord.Embed(title=language['title']['now-play'],
                                       description=f"```{now_play}```\n{warn}",
-                                      color=option['color']['normal'])
+                                      color=option.color.normal)
                 await ctx.send(embed=embed)
             except discord.errors.Forbidden:
                 await ctx.send(f"> {language['title']['now-play']}\n```{now_play}```\n{warn}")
@@ -155,20 +164,23 @@ async def radio_join(ctx):
         logger.error(f"Radio connection error at {ctx.guild.id} [{join_error_AttributeError}]")
 
         embed = discord.Embed(title=language['title']['nothing-to-say'],
-                              description=f"```{language['msg']['plz-join-voice']}```", color=option['color']['info'])
+                              description=f"```{language['msg']['plz-join-voice']}```",
+                              color=option.color.info)
         await ctx.send(embed=embed)
         return
     except discord.errors.ClientException as join_error_ClientException:
         logger.error(f"Radio connection error at {ctx.guild.id} [{join_error_ClientException}]")
 
         embed = discord.Embed(title=language['title']['nothing-to-say'],
-                              description=f"```{language['msg']['join-error']}```", color=option['color']['info'])
+                              description=f"```{language['msg']['join-error']}```",
+                              color=option.color.info)
         await ctx.send(embed=embed)
         return
 
     if voice_client.is_playing():
         embed = discord.Embed(title=language['title']['nothing-to-say'],
-                              description=f"```{language['msg']['i-am-working']}```", color=option['color']['info'])
+                              description=f"```{language['msg']['i-am-working']}```",
+                              color=option.color.info)
         await ctx.send(embed=embed)
         return
 
@@ -183,7 +195,8 @@ async def radio_exit(ctx):
     except KeyError:
         logger.error(f"No radioWorker at {ctx.guild.id}")
         embed = discord.Embed(title=language['title']['nothing-to-say'],
-                              description=f"```{language['msg']['radio-dead']}```", color=option['color']['info'])
+                              description=f"```{language['msg']['radio-dead']}```",
+                              color=option.color.info)
         await ctx.send(embed=embed)
     return
 
@@ -194,25 +207,26 @@ async def radio_skip(ctx):
         if stat[0] == 2:
             embed = discord.Embed(title=language['title']['cant-use'],
                                   description=f"```{language['msg']['private-mode-enable']}```",
-                                  color=option['color']['warn'])
+                                  color=option.color.warn)
             await ctx.send(embed=embed)
         else:
             radioWorker[ctx.guild.id].get_client().stop()
     except KeyError:
         logger.error(f"No radioWorker at {ctx.guild.id}")
         embed = discord.Embed(title=language['title']['nothing-to-say'],
-                              description=f"```{language['msg']['radio-dead']}```", color=option['color']['info'])
+                              description=f"```{language['msg']['radio-dead']}```",
+                              color=option.color.info)
         await ctx.send(embed=embed)
     return
 
 
 async def radio_nowplay(ctx):
-    if option['private_mode']:
+    if option.private_mode:
         logger.warning("[private_mode] is working")
         try:
             embed = discord.Embed(title=language['title']['cant-use'],
                                   description=f"```{language['msg']['private-mode-enable']}```",
-                                  color=option['color']['warn'])
+                                  color=option.color.warn)
             await ctx.send(embed=embed)
         except discord.errors.Forbidden:
             await ctx.send(f"> {language['title']['cant-use']}\n```{language['msg']['private-mode-enable']}```")
@@ -224,7 +238,7 @@ async def radio_nowplay(ctx):
         logger.error(f"No radioWorker at {ctx.guild.id}")
         embed = discord.Embed(title=language['title']['nothing-to-say'],
                               description=f"```{language['msg']['radio-dead']}```",
-                              color=option['color']['info'])
+                              color=option.color.info)
         await ctx.channel.send(embed=embed)
     return
 
@@ -242,13 +256,13 @@ async def radio_repeat(ctx):
 
         embed = discord.Embed(title=language['title']['set-complete'],
                               description=f"```{mode_msg}```",
-                              color=option['color']['normal'])
+                              color=option.color.normal)
         await ctx.send(embed=embed)
     except KeyError:
         logger.error(f"No Radio Worker at {ctx.guild.id}")
         embed = discord.Embed(title=language['title']['nothing-to-say'],
                               description=f"```{language['msg']['radio-dead']}```",
-                              color=option['color']['info'])
+                              color=option.color.info)
         await ctx.send(embed=embed)
         return
     return
@@ -260,14 +274,14 @@ async def radio_play(ctx, query):
     except ValueError:
         embed = discord.Embed(title=language['title']['nothing-to-say'],
                               description=f"```{language['msg']['plz-int']}```",
-                              color=option['color']['info'])
+                              color=option.color.info)
         await ctx.send(embed=embed)
         return
 
     if play_next < 0 or play_next > len(playlist) - 1:
         embed = discord.Embed(title=language['title']['nothing-to-say'],
                               description=f"```{language['msg']['not-in-list']}```",
-                              color=option['color']['info'])
+                              color=option.color.info)
         await ctx.send(embed=embed)
         return
 
@@ -278,13 +292,13 @@ async def radio_play(ctx, query):
         radioWorker[ctx.guild.id].set_stat(1, play_next)
         embed = discord.Embed(title=language['title']['set-complete'],
                               description=f"```{t_next}```",
-                              color=option['color']['normal'])
+                              color=option.color.normal)
         await ctx.send(embed=embed)
     except KeyError:
         logger.error(f"No Radio Worker at {ctx.guild.id}")
         embed = discord.Embed(title=language['title']['nothing-to-say'],
                               description=f"```{language['msg']['radio-lost']}```",
-                              color=option['color']['info'])
+                              color=option.color.info)
         await ctx.send(embed=embed)
         return
     return
@@ -298,7 +312,7 @@ async def radio_search(ctx, query):
             search_result = search_result.replace("#title#", playlist[search_id]['title'])
 
             embed = discord.Embed(title=language['title']['search-complete'],
-                                  color=option['color']['normal'])
+                                  color=option.color.normal)
             embed.add_field(name=language['msg']['track-no'].replace("#number#", str(search_id)),
                             value=search_result,
                             inline=True)
@@ -307,7 +321,7 @@ async def radio_search(ctx, query):
         except IndexError:
             embed = discord.Embed(title=language['title']['nothing-to-say'],
                                   description=f"```{language['msg']['search-result-zero']}```",
-                                  color=option['color']['warn'])
+                                  color=option.color.warn)
             await ctx.send(embed=embed)
             return
     except ValueError:
@@ -315,11 +329,11 @@ async def radio_search(ctx, query):
         if len(query) < 3:
             embed = discord.Embed(title=language['title']['search-cancel'],
                                   description=f"```{language['msg']['too-short-query']}```",
-                                  color=option['color']['warn'])
+                                  color=option.color.warn)
             await ctx.send(embed=embed)
             return
         embed = discord.Embed(title=language['title']['search-complete'],
-                              color=option['color']['normal'])
+                              color=option.color.normal)
         for temp_playlist in playlist:
             def check_it(q):
                 if q.upper() in str(temp_playlist['artist']).upper():
@@ -346,7 +360,7 @@ async def radio_search(ctx, query):
         else:
             embed = discord.Embed(title=language['title']['nothing-to-say'],
                                   description=f"```{language['msg']['search-result-zero']}```",
-                                  color=option['color']['warn'])
+                                  color=option.color.warn)
             await ctx.send(embed=embed)
     return
 
@@ -391,7 +405,7 @@ class RadioOwner(commands.Cog, name=f"Radio - {language['help-msg']['type-admin'
                 await self.leave_all(ctx)
 
             global playlist
-            playlist = playlist_manager.get_playlist()
+            playlist = p.get_playlist()
             await ctx.send(f"```{language['msg']['complete-reload-playlist']}```")
         else:
             logger.warning(f"[{ctx.author.id}]{ctx.author} try to use owner command")
@@ -404,7 +418,7 @@ class RadioOwner(commands.Cog, name=f"Radio - {language['help-msg']['type-admin'
             if len(ctx.message.attachments) == 0:
                 embed = discord.Embed(title=language['title']['upload-cancel'],
                                       description=f"```{language['msg']['upload-cancel-no-upload']}```",
-                                      color=option['color']['info'])
+                                      color=option.color.info)
                 await ctx.send(embed=embed)
                 return
 
@@ -422,7 +436,7 @@ class RadioOwner(commands.Cog, name=f"Radio - {language['help-msg']['type-admin'
                     logger.info("FAIL - Cancel Upload event")
                     embed = discord.Embed(title=language['title']['upload-cancel'],
                                           description=f"```{language['msg']['upload-cancel-directory']}```",
-                                          color=option['color']['warn'])
+                                          color=option.color.warn)
                     await ctx.send(embed=embed)
                     return
 
@@ -433,10 +447,10 @@ class RadioOwner(commands.Cog, name=f"Radio - {language['help-msg']['type-admin'
                 file_name = f"{ctx.author.id}_{hash_result}.{extension}"
                 await item.save(fp=os.fspath(f"./data/user_upload/{file_name}"))
 
-                data = music.get_data(f"./data/user_upload/{file_name}")
+                data = m.get_data(f"./data/user_upload/{file_name}")
                 if data is not None:
                     embed = discord.Embed(title=language['title']['upload-complete'],
-                                          color=option['color']['normal'])
+                                          color=option.color.normal)
                     embed.add_field(name=language['title']['upload-result-info'],
                                     value=f"{data['artist']} - {data['title']}", inline=False)
                     embed.add_field(name=language['title']['upload-result-name'],
@@ -446,7 +460,7 @@ class RadioOwner(commands.Cog, name=f"Radio - {language['help-msg']['type-admin'
                 else:
                     embed = discord.Embed(title=language['title']['upload-cancel'],
                                           description=f"```{language['msg']['upload-cancel-fail']}```",
-                                          color=option['color']['info'])
+                                          color=option.color.info)
                     await ctx.send(embed=embed)
                     os.remove(f"./data/user_upload/{file_name}")
         else:
@@ -487,7 +501,7 @@ class RadioPlayer(commands.Cog, name=f"Radio - {language['help-msg']['type-playe
         if query is None:
             embed = discord.Embed(title=language['title']['nothing-to-say'],
                                   description=f"```{language['msg']['play-fail']}```",
-                                  color=option['color']['info'])
+                                  color=option.color.info)
             await ctx.send(embed=embed)
             return
 
@@ -499,7 +513,7 @@ class RadioPlayer(commands.Cog, name=f"Radio - {language['help-msg']['type-playe
         if query is None:
             embed = discord.Embed(title=language['title']['nothing-to-say'],
                                   description=f"```{language['msg']['find-fail']}```",
-                                  color=option['color']['info'])
+                                  color=option.color.info)
             await ctx.send(embed=embed)
             return
 
@@ -509,50 +523,50 @@ class RadioPlayer(commands.Cog, name=f"Radio - {language['help-msg']['type-playe
 ##################################################################################
 # Radio **Short** Function - For @everyone
 class RadioShort(commands.Cog, name=f"Radio - {language['help-msg']['type-short']}"):
-    @commands.command(help=language['help-msg']['short-join'].replace("#prefix#", option['prefix']))
+    @commands.command(help=language['help-msg']['short-join'].replace("#prefix#", option.prefix))
     @commands.check(is_public)
     async def j(self, ctx):
         await radio_join(ctx)
 
-    @commands.command(help=language['help-msg']['short-exit'].replace("#prefix#", option['prefix']))
+    @commands.command(help=language['help-msg']['short-exit'].replace("#prefix#", option.prefix))
     @commands.check(is_public)
     async def e(self, ctx):
         await radio_exit(ctx)
 
-    @commands.command(help=language['help-msg']['short-skip'].replace("#prefix#", option['prefix']))
+    @commands.command(help=language['help-msg']['short-skip'].replace("#prefix#", option.prefix))
     @commands.check(is_public)
     async def s(self, ctx):
         await radio_skip(ctx)
 
-    @commands.command(help=language['help-msg']['short-now-play'].replace("#prefix#", option['prefix']))
+    @commands.command(help=language['help-msg']['short-now-play'].replace("#prefix#", option.prefix))
     @commands.check(is_public)
     async def np(self, ctx):
         await radio_nowplay(ctx)
 
-    @commands.command(help=language['help-msg']['short-repeat'].replace("#prefix#", option['prefix']))
+    @commands.command(help=language['help-msg']['short-repeat'].replace("#prefix#", option.prefix))
     @commands.check(is_public)
     async def re(self, ctx):
         await radio_repeat(ctx)
 
-    @commands.command(help=language['help-msg']['short-play'].replace("#prefix#", option['prefix']))
+    @commands.command(help=language['help-msg']['short-play'].replace("#prefix#", option.prefix))
     @commands.check(is_public)
     async def p(self, ctx, query=None):
         if query is None:
             embed = discord.Embed(title=language['title']['nothing-to-say'],
                                   description=f"```{language['msg']['play-fail']}```",
-                                  color=option['color']['info'])
+                                  color=option.color.info)
             await ctx.send(embed=embed)
             return
 
         await radio_play(ctx, query)
 
-    @commands.command(help=language['help-msg']['short-search'].replace("#prefix#", option['prefix']))
+    @commands.command(help=language['help-msg']['short-search'].replace("#prefix#", option.prefix))
     @commands.check(is_public)
     async def sh(self, ctx, query=None):
         if query is None:
             embed = discord.Embed(title=language['title']['nothing-to-say'],
                                   description=f"```{language['msg']['find-fail']}```",
-                                  color=option['color']['info'])
+                                  color=option.color.info)
             await ctx.send(embed=embed)
             return
 
@@ -589,10 +603,10 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_ready():
-    await start_page.set_status(bot, "idle", "listening", language['title']['music'])
+    await sp.set_status(bot, "idle", "listening", language['title']['music'])
 
-    start_page.invite_me(bot=bot, permission=52224)
-    guild_manager.dump_guild(bot=bot, save=option['save_guild_data'])
+    sp.invite_me(bot=bot, permission=52224)
+    g.dump_guild(bot=bot, save=option.save_guild_data)
 
 
 ##################################################################################
@@ -602,7 +616,7 @@ try:
     bot.run(bot_token)
 except discord.errors.LoginFailure:
     logger.critical("**Invalid token loaded!!**")
-    token_manager.reset_token()
+    t.reset_token()
 except Exception as e:
     logger.critical("=" * 30)
     logger.critical("<< Bot is dead >>")

@@ -7,8 +7,12 @@ try:
     import eyed3
 except ModuleNotFoundError:
     print("===< Installing Module >===")
-    subprocess.run(['pip', 'install', 'eyeD3==0.9.5'])
+    try:
+        subprocess.run(['pip', 'install', 'eyeD3==0.9.5'])
+    except OSError:
+        subprocess.run(['pip3', 'install', 'eyeD3==0.9.5'])
     print("===========================")
+
     import eyed3
 
 
