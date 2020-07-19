@@ -4,7 +4,7 @@ import os
 import logging
 
 import option
-import data.lib.music as music
+from data.lib import music
 
 logger = logging.getLogger()
 
