@@ -6,6 +6,12 @@ import time
 import option
 
 
+def cls():
+    r = os.system("clear")
+    if r == 1:
+        os.system("cls")
+
+
 class options:
     class lang:
         explain = "Language setting"
@@ -71,6 +77,7 @@ def reset_options():
 
 
 def show_options():
+    cls()
     print("=-" * 30)
     print("You can edit this options \n")
     print(get_keys(options))
@@ -81,6 +88,7 @@ def show_options():
 
 
 def show_details(name):
+    cls()
     name = name.lstrip().lower()
     allow_keys = get_keys(options)
     print("=-" * 30)
@@ -104,6 +112,7 @@ def show_details(name):
 
 
 def show_child(name, child_key):
+    cls()
     child_key = child_key.lstrip().lower()
     allow_keys = get_keys(getattr(options, name))
     print("=-" * 30)
@@ -137,6 +146,7 @@ def show_child(name, child_key):
 
 
 def edit_child(name, child_key):
+    cls()
     value_type = getattr(options, name).value_type
     old_value = getattr(options, name).value
 
@@ -155,6 +165,7 @@ def edit_child(name, child_key):
 
 
 def update(name, old_value, new_value):
+    cls()
     print("Finding...")
     for item in before:
         if item.lstrip().lower().startswith(name):
