@@ -15,6 +15,7 @@ def get_playlist():
     logger.info(f"Loading music from Music Directory...")
     try:
         music_files = os.listdir(option.music_dir)
+        logger.info(f"File Detected: {len(music_files)}")
         for music_file in music_files:
             data = music.get_data(option.music_dir + music_file)
             if data is not None:
@@ -47,6 +48,6 @@ def get_playlist():
     if len(playlist) == 0:
         logger.warning("Playlist is EMPTY!")
     else:
-        logger.info(f"OK! - Music is Ready! + {len(playlist)}")
+        logger.info(f"OK! - Music is Ready! [+ {len(playlist)}]")
 
     return playlist
