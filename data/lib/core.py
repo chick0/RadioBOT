@@ -53,7 +53,7 @@ class Radio:
         if error is not None:
             logger.error(f"Oops, radio player meet the [{error}]")
 
-        if self.ctx.guild.voice_client.is_connected():
+        if self.ctx.voice_client.is_connected():
             if len(self.ctx.voice_client.channel.members) == 1:
                 embed = discord.Embed(title=":deciduous_tree: :evergreen_tree: :deciduous_tree: :evergreen_tree:",
                                       description=f"```{lang['msg']['save']}```", color=option.color.info)
@@ -84,7 +84,8 @@ class Radio:
         try:
             player = discord.FFmpegOpusAudio(playlist[self.playNow]['name'],
                                              executable="./bin/ffmpeg.exe")
-        except OSError:
+        except Exception as e:
+            logger.warning(f"Fail to use 'bin/ffmpeg.exe' cause '{e.__class__.__name__}: {e}'")
             player = discord.FFmpegOpusAudio(playlist[self.playNow]['name'])
 
         if self.stat[0] != 2:
