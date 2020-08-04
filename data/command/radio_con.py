@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 
 import discord
 from discord.ext import commands
 
 import option
-from data.lib import command, check, language
+from data.lib import command, check
 
-lang = language.get_data()
+lang = json.load(open("data/cache__language.json", "r"))
 logger = logging.getLogger()
 
 

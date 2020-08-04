@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import json
 import hashlib
 import logging
 
@@ -8,11 +9,11 @@ import discord
 from discord.ext import commands
 
 import option
-from data.lib import check, language, music, playlist
+from data.lib import check, music, playlist
 
 from data.lib.core import radioDict
 
-lang = language.get_data()
+lang = json.load(open("data/cache__language.json", "r"))
 logger = logging.getLogger()
 
 
