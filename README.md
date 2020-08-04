@@ -24,5 +24,7 @@
     - 설정 파일
 - option_editer.py
     - 설정파일 수정기
-- ./data/lib/*
-    - 자체 라이브러리
+- data/lib/*
+    - 자체 모듈
+- data/command/*
+    - 명령어 모듈

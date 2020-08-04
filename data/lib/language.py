@@ -33,4 +33,7 @@ def get_data():
             logger.critical("=" * 30)
             sys.exit(-1)
 
+    with open("data/cache__language.json", "w") as pl_w:
+        pl_w.write(json.dumps(lang_dat))
+
     return lang_dat

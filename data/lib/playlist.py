@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import json
 import logging
 
 import option
@@ -18,7 +19,8 @@ def get_playlist():
     logger.info(f"File Detected: {len(music_files)}")
     for music_file in music_files:
         try:
-            data = music.get_data(option.music_dir + music_file)
+            data = music.get_data(item=os.path.join(option.music_dir, music_file),
+                                  user_upload=False)
 
             if data is not None:
                 playlist.append(data)
@@ -34,7 +36,8 @@ def get_playlist():
 
         music_files = os.listdir("./data/user_upload/")
         for music_file in music_files:
-            data = music.get_data(f"./data/user_upload/{music_file}", user_upload=True)
+            data = music.get_data(item=os.path.join("data", "user_upload", music_file),
+                                  user_upload=False)
             if data is not None:
                 playlist.append(data)
     except FileNotFoundError:
@@ -52,5 +55,8 @@ def get_playlist():
         logger.warning("Playlist is EMPTY!")
     else:
         logger.info(f"OK! - Music is Ready! [+ {len(playlist)}]")
+
+    with open("data/cache__playlist.json", "w") as pl_w:
+        pl_w.write(json.dumps(playlist))
 
     return playlist

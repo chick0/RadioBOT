@@ -57,7 +57,7 @@
     "warn-user-upload": ":warning: The music was uploaded by another user.",
     "next-song": "Next, the [#artist#]'s [#title#] will play",
     "shutdown-bot": ":wave: Shutting down the bot...",
-    "shutdown-by-admin": "The radio has been shut down by the administrator.",
+    "shutdown-by-admin": ":warning: The radio has been shut down by the administrator.",
     "turn-off-all": "Shut down all radios"
   },
   "title": {

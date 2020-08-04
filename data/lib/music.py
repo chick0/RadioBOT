@@ -1,19 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import subprocess
 
-try:
-    import eyed3
-except ModuleNotFoundError:
-    print("===< Installing Module >===")
-    try:
-        subprocess.run(['pip', 'install', 'eyeD3==0.9.5'])
-    except OSError:
-        subprocess.run(['pip3', 'install', 'eyeD3==0.9.5'])
-    print("===========================")
-
-    import eyed3
+import eyed3
 
 
 logger = logging.getLogger()

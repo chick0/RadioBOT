@@ -57,7 +57,7 @@
     "warn-user-upload": ":warning: 해당 음악은 다른 사용자가 업로드한 음악입니다.",
     "next-song": "다음은 [#artist#]의 [#title#](이)가 재생됩니다",
     "shutdown-bot": ":wave: 봇을 종료합니다",
-    "shutdown-by-admin": "봇 관리자에 의하여 라디오가 종료되었습니다",
+    "shutdown-by-admin": ":warning: 봇 관리자에 의하여 라디오가 종료되었습니다",
     "turn-off-all": "켜저있는 다른 라디오를 모두 종료합니다"
   },
   "title": {
