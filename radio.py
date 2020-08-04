@@ -31,7 +31,7 @@ except ModuleNotFoundError:
 try:
     from data.lib import guild, language, log, music, playlist, start_page, token
 except ModuleNotFoundError:
-    print("Fail to load Cat library...")
+    print("Fail to load RadioBOT library...")
     print(" - PLZ Download again")
     print(" - Download: https://github.com/chick0/RadioBOT")
     sys.exit(-1)
