@@ -17,8 +17,8 @@ lang = json.load(open("data/cache__language.json", "r"))
 
 async def radio_join(ctx):
     try:
-        logger.info(f"Radio Connected at {ctx.guild.id}")
         voice_client = await ctx.author.voice.channel.connect()
+        logger.info(f"Radio Connected at {ctx.guild.id}")
     except AttributeError as join_error_AttributeError:
         logger.error(f"Radio connection error at {ctx.guild.id} [{join_error_AttributeError}]")
 
@@ -43,7 +43,7 @@ async def radio_join(ctx):
         await ctx.send(embed=embed)
         return
 
-    core.radioDict[ctx.guild.id] = core.Radio(ctx)
+    core.radioDict[ctx.guild.id] = core.Radio(ctx, voice_client)
     core.radioDict[ctx.guild.id].play_radio()
 
 

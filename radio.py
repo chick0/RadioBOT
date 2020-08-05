@@ -32,7 +32,8 @@ except ModuleNotFoundError:
 try:
     import option
 except ModuleNotFoundError:
-    print("Option File is Missing!")
+    print("RadioBOT Option File is Missing!")
+    print(" - Download: https://github.com/chick0/RadioBOT/blob/master/option.py")
     sys.exit(-2)
 
 
@@ -102,7 +103,7 @@ async def on_ready():
     del lang
 
     start_page.invite_me(bot=bot, permission=52224)
-    guild.dump_guild(bot=bot, save=option.save_guild_data)
+    guild.dump_guild(bot=bot)
 
 
 ##################################################################################

@@ -35,10 +35,12 @@ class RadioOwner(commands.Cog, name=f"Radio - {lang['help-msg']['type-admin']}")
         if await ctx.bot.is_owner(user=ctx.author):
             await ctx.send(lang['msg']['turn-off-all'])
 
-            clients = ctx.bot.voice_clients
-            for client in clients:
-                await radioDict[ctx.guild.id].get_ctx().send(f"{lang['msg']['shutdown-by-admin']}")
-                await client.disconnect()
+            for key in list(radioDict.keys()):
+                try:
+                    await radioDict[key].get_ctx().send(f"{lang['msg']['shutdown-by-admin']}")
+                    await radioDict[key].get_ctx().voice_client.disconnect()
+                except Exception as e:
+                    logger.warning(f"Shutdown fail at '{key}' cause '{e.__class__.__name__}: {e}'")
         else:
             logger.warning(f"[{ctx.author.id}]{ctx.author} try to use owner command")
 

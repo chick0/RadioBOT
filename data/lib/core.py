@@ -20,13 +20,15 @@ radioDict = dict()
 
 
 class Radio:
-    def __init__(self, ctx):
+    def __init__(self, ctx, vc):
         self.ctx = ctx
+        self.voice_client = vc
         self.playNow = random.randint(0, len(playlist) - 1)
         self.played = [self.playNow]
         self.stat = [0, 0]
         # { type: ["play_mode", "play_next"], play_mode: {0: "normal", 1: "play play_next", 2: "repeat mode"} }
         logger.info(f"Radio ON at {self.ctx.guild.id} by [{self.ctx.author.id}]{self.ctx.author}")
+        print(self.voice_client)
 
     def __del__(self):
         try:
@@ -35,7 +37,7 @@ class Radio:
             logger.info(f"Radio OFF at 'Unknown' cause '{e.__class__.__name__}'")
 
         try:
-            asyncio.run(self.ctx.voice_client.disconnect())
+            asyncio.Task(coro=self.voice_client.disconnect(), loop=self.ctx.bot.loop)
         except Exception as e:
             logger.warning(f"{e.__class__.__name__}: {e}")
 
@@ -53,12 +55,12 @@ class Radio:
         if error is not None:
             logger.error(f"Oops, radio player meet the [{error}]")
 
-        if self.ctx.voice_client.is_connected():
-            if len(self.ctx.voice_client.channel.members) == 1:
+        if self.voice_client.is_connected():
+            if len(self.voice_client.channel.members) == 1:
                 embed = discord.Embed(title=":deciduous_tree: :evergreen_tree: :deciduous_tree: :evergreen_tree:",
                                       description=f"```{lang['msg']['save']}```", color=option.color.info)
                 asyncio.run_coroutine_threadsafe(self.ctx.send(embed=embed), self.ctx.bot.loop)
-                asyncio.run_coroutine_threadsafe(self.ctx.voice_client.disconnect(), self.ctx.bot.loop)
+                asyncio.run_coroutine_threadsafe(self.voice_client.disconnect(), self.ctx.bot.loop)
             else:
                 if self.stat[0] == 0:
                     self.playNow = random.randint(0, len(playlist) - 1)
@@ -90,7 +92,7 @@ class Radio:
 
         if self.stat[0] != 2:
             asyncio.Task(self.send_play(self.ctx), loop=self.ctx.bot.loop)
-        self.ctx.voice_client.play(player, after=self.play_next)
+        self.voice_client.play(player, after=self.play_next)
 
     async def send_play(self, ctx):
         if option.private_mode:

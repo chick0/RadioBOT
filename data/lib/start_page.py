@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import discord
 
+import discord
 
 logger = logging.getLogger()
 
 
-def __get_status(option):
+def get_status(option):
     if option == "idle":
         return discord.Status.idle
     elif option == "dnd":
@@ -20,7 +20,7 @@ def __get_status(option):
         return discord.Status.online
 
 
-def __get_type(option):
+def get_type(option):
     if option == "playing":
         return discord.ActivityType.playing
     elif option == "streaming":
@@ -34,8 +34,8 @@ def __get_type(option):
 
 
 async def set_status(bot, status, activity, name):
-    await bot.change_presence(status=__get_status(status),
-                              activity=discord.Activity(type=__get_type(activity),
+    await bot.change_presence(status=get_status(status),
+                              activity=discord.Activity(type=get_type(activity),
                                                         name=name)
                               )
 
