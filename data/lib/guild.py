@@ -14,9 +14,9 @@ def dump_guild(bot):
             dict(
                 id=temp_guild.id,
                 name=temp_guild.name,
-                region=temp_guild.region,
+                region=str(temp_guild.region),
                 owner_id=temp_guild.owner_id,
-                member=list(temp_guild.members)
+                member=len(temp_guild.members)
             )
         )
     logger.info("-" * 50)
