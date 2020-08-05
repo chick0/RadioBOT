@@ -72,12 +72,12 @@ class RadioOwner(commands.Cog, name=f"Radio - {lang['help-msg']['type-admin']}")
                 logger.info("Testing User Upload Directory")
                 with open("./data/user_upload/test", "w") as upload_directory_test:
                     upload_directory_test.write("Hello, World")
-                    logger.info("OK! - Upload Directory Alive")
+                    logger.info("OK! - Upload Directory is Online")
             except FileNotFoundError:
                 logger.info("FAIL - Try to create User Upload Directory")
                 try:
                     os.mkdir("./data/user_upload")
-                    logger.info("OK! - Upload Directory is Online")
+                    logger.info("OK! - Upload Directory is now Online")
                 except PermissionError:
                     logger.info("FAIL - Cancel Upload event")
                     embed = discord.Embed(title=lang['title']['upload-cancel'],
