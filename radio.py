@@ -13,17 +13,17 @@ try:
 except ModuleNotFoundError:
     print("===< Installing Module >===")
     try:
-        subprocess.run(['pip', '-r', 'install', 'requirements.txt'])
+        subprocess.run(['pip', 'install', '-r', 'requirements.txt'])
     except OSError:
-        subprocess.run(['pip3', '-r', 'install', 'requirements.txt'])
+        subprocess.run(['pip3', 'install', '-r', 'requirements.txt'])
     except Exception as e:
         print(f"Unexpected Error {e.__class__.__name__}!")
         print("Try to user install...")
 
         try:
-            subprocess.run(['pip', '-r', 'install', 'requirements.txt', '--user'])
+            subprocess.run(['pip', 'install', '-r', 'requirements.txt', '--user'])
         except OSError:
-            subprocess.run(['pip3', '-r', 'install', 'requirements.txt', '--user'])
+            subprocess.run(['pip3', 'install', '-r', 'requirements.txt', '--user'])
     print("===========================")
 
     import discord
