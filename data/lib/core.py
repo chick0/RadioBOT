@@ -36,10 +36,7 @@ class Radio:
         except Exception as e:
             logger.info(f"Radio OFF at 'Unknown' cause '{e.__class__.__name__}'")
 
-        try:
-            asyncio.Task(coro=self.voice_client.disconnect(), loop=self.ctx.bot.loop)
-        except Exception as e:
-            logger.warning(f"{e.__class__.__name__}: {e}")
+        asyncio.run_coroutine_threadsafe(coro=self.voice_client.disconnect(), loop=self.ctx.bot.loop)
 
     def get_ctx(self):
         return self.ctx
