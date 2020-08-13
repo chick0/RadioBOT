@@ -4,6 +4,8 @@ import logging
 
 import discord
 
+from data.lib import invite
+
 logger = logging.getLogger()
 
 
@@ -40,10 +42,9 @@ async def set_status(bot, status, activity, name):
                               )
 
 
-def invite_me(bot, permission):
+def bot_info(bot):
     logger.info("-" * 50)
     logger.info(f"BOT Login -> {bot.user}")
     logger.info("-" * 50)
-    logger.info(f"invite bot: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}"
-                f"&permissions={permission}&scope=bot")
+    logger.info(f"invite bot: {invite.get_link(bot)}")
     logger.info("-" * 50)

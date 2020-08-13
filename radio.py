@@ -102,7 +102,7 @@ async def on_ready():
     await start_page.set_status(bot, "idle", "listening", lang['title']['music'])
     del lang
 
-    start_page.invite_me(bot=bot, permission=52224)
+    start_page.bot_info(bot=bot)
     guild.dump_guild(bot=bot)
 
 

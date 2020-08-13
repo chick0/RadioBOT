@@ -5,6 +5,7 @@ lang = "ko"
 
 # BOT Prefix
 prefix = ";"
+default_permission = 52224
 
 # Advanced Settings
 music_dir = "./data/music/"
