@@ -10,20 +10,18 @@ import discord
 import option
 
 logger = logging.getLogger()
-
-# cache loader
-playlist = json.load(open("data/cache__playlist.json", "r"))
 lang = json.load(open("data/cache__language.json", "r"))
-
-
 radioDict = dict()
 
 
 class Radio:
     def __init__(self, ctx, vc):
+        # cache
+        self.playlist = json.load(open("data/cache__playlist.json", "r"))
+
         self.ctx = ctx
         self.voice_client = vc
-        self.playNow = random.randint(0, len(playlist) - 1)
+        self.playNow = random.randint(0, len(self.playlist) - 1)
         self.played = [self.playNow]
         self.stat = [0, 0]
         # { type: ["play_mode", "play_next"], play_mode: {0: "normal", 1: "play play_next", 2: "repeat mode"} }
@@ -36,7 +34,10 @@ class Radio:
         except Exception as e:
             logger.info(f"Radio OFF at 'Unknown' cause '{e.__class__.__name__}'")
 
-        asyncio.run_coroutine_threadsafe(coro=self.voice_client.disconnect(), loop=self.ctx.bot.loop)
+        asyncio.run_coroutine_threadsafe(
+            coro=self.voice_client.disconnect(),
+            loop=self.ctx.bot.loop
+        )
 
     def get_ctx(self):
         return self.ctx
@@ -54,20 +55,29 @@ class Radio:
 
         if self.voice_client.is_connected():
             if len(self.voice_client.channel.members) == 1:
-                embed = discord.Embed(title=":deciduous_tree: :evergreen_tree: :deciduous_tree: :evergreen_tree:",
-                                      description=f"```{lang['msg']['save']}```", color=option.color.info)
-                asyncio.run_coroutine_threadsafe(self.ctx.send(embed=embed), self.ctx.bot.loop)
-                asyncio.run_coroutine_threadsafe(self.voice_client.disconnect(), self.ctx.bot.loop)
+                embed = discord.Embed(
+                    title=":deciduous_tree: :evergreen_tree: :deciduous_tree: :evergreen_tree:",
+                    description=f"```{lang['msg']['save']}```",
+                    color=option.color.info
+                )
+                asyncio.run_coroutine_threadsafe(
+                    coro=self.ctx.send(embed=embed),
+                    loop=self.ctx.bot.loop
+                )
+                asyncio.run_coroutine_threadsafe(
+                    coro=self.voice_client.disconnect(),
+                    loop=self.ctx.bot.loop
+                )
             else:
                 if self.stat[0] == 0:
-                    self.playNow = random.randint(0, len(playlist) - 1)
+                    self.playNow = random.randint(0, len(self.playlist) - 1)
                     while True:
-                        if len(self.played) == len(playlist):
+                        if len(self.played) == len(self.playlist):
                             del self.played[:]
                             break
 
                         if self.playNow in self.played:
-                            self.playNow = random.randint(0, len(playlist) - 1)
+                            self.playNow = random.randint(0, len(self.playlist) - 1)
                         else:
                             break
                     self.played.append(self.playNow)
@@ -81,24 +91,34 @@ class Radio:
 
     def play_radio(self):
         try:
-            player = discord.FFmpegOpusAudio(playlist[self.playNow]['name'],
-                                             executable="./bin/ffmpeg.exe")
+            player = discord.FFmpegOpusAudio(
+                source=self.playlist[self.playNow]['name'],
+                executable="./bin/ffmpeg.exe"
+            )
         except Exception as e:
             logger.warning(f"Fail to use 'bin/ffmpeg.exe' cause '{e.__class__.__name__}: {e}'")
-            player = discord.FFmpegOpusAudio(playlist[self.playNow]['name'])
+            player = discord.FFmpegOpusAudio(
+                source=self.playlist[self.playNow]['name']
+            )
 
         if self.stat[0] != 2:
-            asyncio.Task(self.send_play(self.ctx), loop=self.ctx.bot.loop)
-        self.voice_client.play(player, after=self.play_next)
+            asyncio.Task(
+                coro=self.send_play(self.ctx),
+                loop=self.ctx.bot.loop
+            )
+        self.voice_client.play(
+            source=player,
+            after=self.play_next
+        )
 
     async def send_play(self, ctx):
         if option.private_mode:
             return
         else:
-            now_play = lang['msg']['track-info'].replace("#artist#", playlist[self.playNow]['artist'])
-            now_play = now_play.replace("#title#", playlist[self.playNow]['title'])
+            now_play = lang['msg']['track-info'].replace("#artist#", self.playlist[self.playNow]['artist'])
+            now_play = now_play.replace("#title#", self.playlist[self.playNow]['title'])
             warn = ""
-            if playlist[self.playNow]['user_upload'] is True:
+            if self.playlist[self.playNow]['user_upload'] is True:
                 warn = lang['msg']['warn-user-upload']
             try:
                 embed = discord.Embed(title=lang['title']['now-play'],

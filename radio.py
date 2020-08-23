@@ -52,7 +52,11 @@ playlist.get_playlist()
 logger = logging.getLogger()
 
 bot = commands.Bot(command_prefix=option.prefix)
-bot_token = token.get_token()
+
+token_worker = token.Token(file_name="token.json",
+                           service="Discord")
+bot_token = token_worker.get_token()
+del token_worker
 
 
 ##################################################################################
@@ -113,7 +117,11 @@ try:
     bot.run(bot_token)
 except discord.errors.LoginFailure:
     logger.critical("**Invalid token loaded!!**")
-    token.reset_token()
+
+    token_worker = token.Token(file_name="token.json",
+                               service="Discord")
+    token_worker.reset_token()
+    del token_worker
 except Exception as e:
     logger.critical("=" * 30)
     logger.critical("<< Bot is dead >>")
