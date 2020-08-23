@@ -21,11 +21,14 @@ class RadioShort(commands.Cog, name=f"Radio - {lang['help-msg']['type-short']}")
 
     @commands.command(help=lang['help-msg']['short-exit'].replace("#prefix#", option.prefix))
     @commands.check(check.is_public)
+    @commands.check(check.is_join)
     async def e(self, ctx):
         await command.radio_exit(ctx)
 
     @commands.command(help=lang['help-msg']['short-skip'].replace("#prefix#", option.prefix))
+    @commands.cooldown(rate=3, per=50, type=commands.BucketType.user)
     @commands.check(check.is_public)
+    @commands.check(check.is_join)
     async def s(self, ctx):
         await command.radio_skip(ctx)
 
@@ -36,11 +39,13 @@ class RadioShort(commands.Cog, name=f"Radio - {lang['help-msg']['type-short']}")
 
     @commands.command(help=lang['help-msg']['short-repeat'].replace("#prefix#", option.prefix))
     @commands.check(check.is_public)
+    @commands.check(check.is_join)
     async def re(self, ctx):
         await command.radio_repeat(ctx)
 
     @commands.command(help=lang['help-msg']['short-play'].replace("#prefix#", option.prefix))
     @commands.check(check.is_public)
+    @commands.check(check.is_join)
     async def p(self, ctx, query=None):
         if query is None:
             embed = discord.Embed(title=lang['title']['nothing-to-say'],

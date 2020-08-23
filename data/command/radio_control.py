@@ -21,11 +21,14 @@ class RadioPlayer(commands.Cog, name=f"Radio - {lang['help-msg']['type-player']}
 
     @commands.command(help=lang['help-msg']['exit'])
     @commands.check(check.is_public)
+    @commands.check(check.is_join)
     async def exit(self, ctx):
         await command.radio_exit(ctx)
 
     @commands.command(help=lang['help-msg']['skip'])
+    @commands.cooldown(rate=3, per=50, type=commands.BucketType.user)
     @commands.check(check.is_public)
+    @commands.check(check.is_join)
     async def skip(self, ctx):
         await command.radio_skip(ctx)
 
@@ -36,11 +39,13 @@ class RadioPlayer(commands.Cog, name=f"Radio - {lang['help-msg']['type-player']}
 
     @commands.command(help=lang['help-msg']['repeat'])
     @commands.check(check.is_public)
+    @commands.check(check.is_join)
     async def repeat(self, ctx):
         await command.radio_repeat(ctx)
 
     @commands.command(help=lang['help-msg']['play'])
     @commands.check(check.is_public)
+    @commands.check(check.is_join)
     async def play(self, ctx, query=None):
         if query is None:
             embed = discord.Embed(title=lang['title']['nothing-to-say'],
