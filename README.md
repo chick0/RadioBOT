@@ -1,3 +1,7 @@
+# 새로운 프로젝트로 대체됨
+
+https://github.com/chick0/discord_radio
+---
 # RadioBOT
 - discord.py를 사용해서 만든 디스코드 라디오 봇
 
